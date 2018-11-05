@@ -60,8 +60,10 @@ rule lexer = parse
 | "break"    { BREAK }
 | "return"   { RETURN }
 | "function" { FUNCTION }
+| "void"     { VOID }
 | "NULL"     { NULL }
 | "logical"  { LOGICAL }
+| "integer"  {INTEGER }
 | "float"    { FLOAT }
 | "string"   { STRING }
 | "object"   { OBJECT }
