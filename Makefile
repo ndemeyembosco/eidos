@@ -11,9 +11,9 @@ all: clean
 	$(COMPILER) -c parse.ml
 	ocamllex lex.mll
 	$(COMPILER) -c lex.ml
-	$(COMPILER) -c interp.ml
+	# $(COMPILER) -c interp.ml
 	$(COMPILER) -c main.ml
-	$(COMPILER) -o interp ast.cmo parse.cmo lex.cmo interp.cmo main.cmo # order matters
+	$(COMPILER) -o interp ast.cmo parse.cmo lex.cmo main.cmo # order matters
 
 clean:
 	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml interp

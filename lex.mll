@@ -22,18 +22,34 @@ rule lexer = parse
 | '}'   { RCBRACE }
 | '('   { LPAREN }
 | ')'   { RPAREN }
+| '['        { LBRACE }
+| ']'        { RBRACE }
+| '<'        { LESS }
+| '>'        { GREATER }
 | '+'   { PLUS }
-| '*'   { TIMES }
+| '-'        { MINUS }
+| '*'        { TIMES }
+| '/'        { DIVIDE }
+| '%'        { MODULO }
+| '^'        { CARROT }
+| '!'        { EXCLAIM }
 | '='  { EQUALS}
+| '?'        { TERNARY }
+| '|'        { OR }
+| '&'        { AND }
+| ':'        { COLON }
 | ';'   { SEMI }
-| "skip"   { LSkip }
+| ','   { COMMA }
+| '.'    { DOT }
+| '$'        { DOLLAR }
+| "!="       { NEQ }
+| "=="       { EQ }
+| "<="       { LEQ }
+| ">="       { GEQ }
 | "if"     { IF }
 | "else"     { ELSE }
 | "while"  { WHILE }
-| "pushheap" { LPushheap }
-| "popheap"  { LPopheap  }
-| "pushvar"  { LPushvar  }
-| "popvar"   { LPopvar   }
-| '-'? ['0'-'9']+ { LInt (int_of_string (Lexing.lexeme lexbuf)) }
+| ['0'-'9']+ { LInt (int_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
+| stringLit { LStr (Lexing.lexeme lexbuf) }
 | eof { LEof }

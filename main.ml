@@ -1,4 +1,4 @@
-open Interp
+(* open Interp *)
 
 (* the next two bindings really belong in a "main" module, but this
 keeps all the code you need in one place *)
@@ -16,4 +16,4 @@ let get_prog () =
 
 let _ =
   let prog = get_prog () in
-  print_string ("ans = " ^ string_of_int (interp prog) ^"\n")
+  prog
