@@ -9,4 +9,4 @@ function (integer)bar(integer y) 
 return y * P * Q; 
 }  
 x = 3; 
-defineConstant(“Q”, x + 7); 
+defineConstant(“Q”, x + 7);
