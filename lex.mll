@@ -18,6 +18,7 @@ let ident1     = ['a'-'z']|['A'-'Z']|'_'
 let ident      = ident1 (['0'-'9']| ident1)*
 let exp        = ['E''e']['+''-']?['0'-'9']+
 let decpart    = '.'['0'-'9']*
+let digit      = ['0'-'9']+
 let number     = ['0'-'9']+decpart?exp?
 let stringChar = ('\\'['"''\\''n''r''t']|[^ '\n''\r''\\''\"'])+
 let stringLit  =  '\"'stringChar?'\"'
@@ -77,7 +78,8 @@ rule lexer = parse
 | "f"        { FLOATRV }
 | "s"        { STRINGRV }
 | "o"        { OBJECTRV }
-| number { LInt (int_of_string (Lexing.lexeme lexbuf)) }
+| digit { LInt (int_of_string (Lexing.lexeme lexbuf)) }
+| number { LFloat (float_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
 | stringLit {LStr (Lexing.lexeme lexbuf)}
 | eof { EOF }

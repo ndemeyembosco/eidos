@@ -21,7 +21,7 @@ let get_prog () =
      let tokens = get_tokens () in
      match tokens with
          | None    -> exit 0
-         | Some ts -> try Some (Parse.interp_block Lex.lexer ts)
+         | Some ts -> try Some (Parse.interpreter_block Lex.lexer ts)
                       with Parsing.Parse_error -> None
 
 (* let string_of_unit () = "()" *)
