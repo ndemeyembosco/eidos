@@ -1,3 +1,10 @@
+%{
+let parse_error s = (* Called by the parser function on error *)
+    print_endline s;
+    print_string "Hubo un error\n";
+    flush stdout
+%}
+
 %start interpreter_block
 %type <unit> interpreter_block
 
@@ -31,7 +38,7 @@ compound_statement:
 
 multiple_statements:
   statement {}
-| statement multiple_statements {} 
+| multiple_statements statement{} 
 
 expr_statement:
   SEMI {}
@@ -42,13 +49,13 @@ selection_statement:
 | IF LPAREN expr RPAREN compound_statement ELSE compound_statement {}
 
 for_statement:
-  FOR LPAREN identifier IN expr RPAREN statement {}
+  FOR LPAREN identifier IN expr RPAREN statement { print_string "Doing a FOR loop \n"}
 
 do_while_statement:
   DO statement WHILE LPAREN expr RPAREN SEMI {}
 
 while_statement:
-  WHILE LPAREN expr RPAREN statement {}
+  WHILE LPAREN expr RPAREN statement {print_string "Doing a WHILE loop \n"}
 
 jump_statement:
   NEXT SEMI {}
@@ -62,11 +69,11 @@ primary_expr:
 | LPAREN conditional_expr RPAREN {}
 
 constant:
-  LInt {}
-| LStr {}
+  LInt { print_string ("Integer = "^(string_of_int $1)^"\n") }
+| LStr { }
 
 identifier:
-  LVar {}
+  LVar { print_string ("Identifier = "^$1^"\n") }
 
 argument_expr:
   conditional_expr {}
@@ -74,7 +81,7 @@ argument_expr:
 
 argument_expr_list:
   argument_expr {}
-| argument_expr COMMA argument_expr_list {}
+| argument_expr_list COMMA argument_expr{}
 
 /* postfix_expr */
 
@@ -111,7 +118,7 @@ unary_expr:
 
 exp_expr:
   unary_expr {}
-| unary_expr CARROT exp_expr {}
+| exp_expr CARROT unary_expr {}
 
 interpreter_block:
   LEof {}
@@ -119,7 +126,7 @@ interpreter_block:
 | function_decl interpreter_block {}
 
 function_decl:
-  LVar LEof{}
+  LVar LEof{} /*to do*/
 
 seq_expr:
   exp_expr {}
@@ -150,19 +157,19 @@ equality_expr:
 
 logical_and_expr:
   equality_expr {}
-| equality_expr AND logical_and_expr {}
+| logical_and_expr AND equality_expr {}
 
 logical_or_expr:
   logical_and_expr {}
-| logical_and_expr OR logical_or_expr {}
+| logical_or_expr OR logical_and_expr {}
 
 conditional_expr:
   logical_or_expr {}
 | logical_or_expr TERNARY conditional_expr ELSE conditional_expr {}
 
 assignment_expr:
-  conditional_expr {}
-| conditional_expr EQUALS conditional_expr {}
+  conditional_expr {print_string "Node of an assignment operation \n"}
+| conditional_expr EQUALS conditional_expr { print_string ("Performed an assignment operation\n") }
 
 expr:
   conditional_expr {}
