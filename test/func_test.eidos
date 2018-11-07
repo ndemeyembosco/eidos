@@ -1,0 +1,12 @@
+function (void)foo(integer x) 
+{ 
+x = x + 1; 
+d = 2 * x; 
+defineConstant(“P”, d + 1);  } 
+ 
+function (integer)bar(integer y) 
+{ 
+return y * P * Q; 
+}  
+x = 3; 
+defineConstant(“Q”, x + 7); 
