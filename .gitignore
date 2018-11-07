@@ -5,3 +5,7 @@ interp
 lex.ml
 parse.ml
 parse.mli
+interp.ml
+lex_e.mll
+parse_e.mly
+ast.ml
