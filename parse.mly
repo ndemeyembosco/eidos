@@ -16,6 +16,7 @@ let parse_error s = (* Called by the parser function on error *)
 %token DO FOR IN NEXT BREAK RETURN IF ELSE WHILE 
 %token LEof
 %token <int> LInt
+%token <float> LFloat
 %token <string> LVar
 %token <string> LStr
 
@@ -70,6 +71,7 @@ primary_expr:
 
 constant:
   LInt { print_string ("Integer = "^(string_of_int $1)^"\n") }
+| LFloat { print_string ("Float = "^(string_of_float $1)^"\n")}  
 | LStr { }
 
 identifier:

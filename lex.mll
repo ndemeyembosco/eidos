@@ -57,6 +57,7 @@ rule lexer = parse
 | "next" { NEXT }
 | "return" { RETURN }
 | digit { LInt (int_of_string (Lexing.lexeme lexbuf)) }
+| number { LFloat (float_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
 | stringLit { LStr (Lexing.lexeme lexbuf) }
 | eof { LEof }
