@@ -18,4 +18,4 @@ all: clean
 	$(COMPILER) -o main eidosAST.cmo parse.cmo lex.cmo main.cmo # order matters
 
 clean:
-	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml main
+	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml main *.output 
