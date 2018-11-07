@@ -1,10 +1,14 @@
 %{
-open eidosAst
+open EidosAST
+
+exception EOFLex
+
 %}
 
 
 %start interp_block
-%type <interp_block> interp_block
+/* %type <EidosAST.interp_block> interp_block */
+%type <unit> interp_block1 interp_block
 
 
 %token LPAREN RPAREN LCBRACE RCBRACE SEMI EQUALS TERNARY OR AND
@@ -12,7 +16,7 @@ open eidosAst
 %token LBRACE RBRACE COMMA DOT DOLLAR NEQ EQ LEQ GEQ IF ELSE FOR IN DO GREAT
 %token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
 %token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
-%token LEof
+%token EOF
 %token <int> LInt
 %token <string> LVar
 %token <string> LStr
@@ -23,16 +27,15 @@ open eidosAst
 %%
 
 interp_block :
-        LEof                       { I (None, EOF)}
-      | interp_block1 LEof         { I (Some $1, EOF)}
+      | interp_block1  EOF             {$1}
 
 interp_block1 :
-       interp_block11                {[$1]}
-      | interp_block1 interp_block11 { $2 :: $1 (* reverse *)}
+       interp_block11                {(* TODO *)}
+      | interp_block1 interp_block11 {(* TODO *)}
 
 interp_block11 :
-        statement                  { Stmt $1}
-      | func_decl                   { FnDecl $1}
+        statement                  {(* TODO *)}
+      | func_decl                   {(* TODO *)}
 
 
 compound_stmt  : LCBRACE opt_stmt  RCBRACE      {(* TODO *)}
@@ -44,58 +47,58 @@ opt_stmt     :
 
 
 statement :
-        compound_stmt              {Cstmt $1 }
-      | expr_stmt                  {Expr  $1 }
-      | select_stmt                {Slct  $1 }
-      | for_stmt                   {For   $1 }
-      | do_while_stmt              {Do    $1 }
-      | while_stmt                 {While $1 }
-      | jump_stmt                  {Jump  $1 }
+        compound_stmt              {(* TODO *)}
+      | expr_stmt                  {(* TODO *)}
+      | select_stmt                {(* TODO *)}
+      | for_stmt                   {(* TODO *)}
+      | do_while_stmt              {(* TODO *)}
+      | while_stmt                 {(* TODO *)}
+      | jump_stmt                  {(* TODO *)}
 
 expr_stmt :
-        SEMI                       {Estmt None}
-      | assign_expr SEMI           {Estmt (Some $1)}
+        SEMI                       {(* TODO *)}
+      | assign_expr SEMI           {(* TODO *)}
 
 select_stmt :
-      IF LPAREN expr RPAREN compound_stmt estatement {(* TODO *)}
+      IF LPAREN expr RPAREN statement estatement {(* TODO *)}
 
 estatement :
         /* empty */                     {(* TODO *)}
-      | ELSE compound_stmt              {(* TODO *)}
+      | ELSE     statement              {(* TODO *)}
 
 for_stmt :
-      FOR LPAREN LVar IN expr RPAREN statement    {ForStmt ($3, $5, $7)}
+      FOR LPAREN LVar IN expr RPAREN statement    {(* TODO *)}
 
 do_while_stmt :
-        DO statement WHILE LPAREN expr RPAREN SEMI {DoWhile ($2, $5)}
+        DO statement WHILE LPAREN expr RPAREN SEMI {(* TODO *)}
 
 while_stmt  :
-        WHILE LPAREN expr RPAREN statement     {WhileStmt ($3, $5)}
+        WHILE LPAREN expr RPAREN statement     {(* TODO *)}
 
 jump_stmt   :
-        NEXT  SEMI                               {Next}
-      | BREAK  SEMI                              {Break}
-      | RETURN mexpr SEMI                        {Return $2}
+        NEXT  SEMI                               {(* TODO *)}
+      | BREAK  SEMI                              {(* TODO *)}
+      | RETURN mexpr SEMI                        {(* TODO *)}
 
 mexpr  :
-      /* empty */                                {None}
-    | expr                                       {Some $1}
+      /* empty */                                {(* TODO *)}
+    | expr                                       {(* TODO *)}
 
-expr   :  conditional_expr                       {E $1 }
+expr   :  conditional_expr                       {(* TODO *)}
 
 assign_expr :
-        conditional_expr        optAssign      {Assign ($1, $2)}
+        conditional_expr        optAssign      {(* TODO *)}
 
 optAssign   :
-        /* empty */                             {None}
-      | EQUALS conditional_expr                 {Some $2}
+        /* empty */                             {(* TODO *)}
+      | EQUALS conditional_expr                 {(* TODO *)}
 
 conditional_expr :
-       l_or_expr optCond                        {Cond ($1, $2)}
+       l_or_expr optCond                        {(* TODO *)}
 
 optCond    :
-       /* empty */                                      {None }
-    |  TERNARY conditional_expr ELSE conditional_expr   {Some ($2, $4)}
+       /* empty */                                      {(* TODO *)}
+    |  TERNARY conditional_expr ELSE conditional_expr   {(* TODO *)}
 
 l_or_expr :
       l_and_expr  opt_l_and                      {(* TODO *)}

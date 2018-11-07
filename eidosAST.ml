@@ -1,5 +1,7 @@
+type interp_block = I of ((interp_block1 list) option * peof)
 
-type statement  = Cstmt of compound_stmt
+
+and statement  = Cstmt of compound_stmt
                 | Expr of expr_stmt
                 | Slct of select_stmt
                 | For of for_stmt
@@ -12,9 +14,9 @@ and compound_stmt = CmpdStmt of ((statement list) option)
 and interp_block1 = Smt of statement
                    | FnDecl of fun_decl
 
-and interp_block = I of ((interp_block1 list) option * eof)
 
-and eof = EOF
+
+and peof = EOF
 
 
 and expr_stmt = Estmt of (assign_expr option)

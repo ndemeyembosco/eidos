@@ -6,6 +6,8 @@
 {
 open Parse
 
+exception Eof
+
 
 
 }
@@ -32,7 +34,7 @@ rule lexer = parse
 | '|'        { OR }
 | '&'        { AND }
 | '<'        { LESS }
-| '>'        { GEQ }
+| '>'        { GREAT }
 | '+'        { PLUS }
 | '-'        { MINUS }
 | '*'        { TIMES }
@@ -78,4 +80,5 @@ rule lexer = parse
 | number { LInt (int_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
 | stringLit {LStr (Lexing.lexeme lexbuf)}
-| eof { LEof }
+| eof { EOF }
+| _  {lexer lexbuf}
