@@ -1,11 +1,12 @@
-%start program
-%type <unit> program
+%start interpreter_block
+%type <unit> interpreter_block
 
 %token LPAREN RPAREN LCBRACE RCBRACE LBRACE RBRACE
 %token DOLLAR TERNARY OR AND
 %token PLUS MINUS TIMES DIVIDE MODULO
 %token LESS GREATER NEQ EQ LEQ GEQ
-%token COLON CARROT EXCLAIM EQUALS SEMI COMMA DOT IF ELSE WHILE LPushheap LPopheap LPushvar LPopvar
+%token COLON CARROT EXCLAIM EQUALS SEMI COMMA DOT 
+%token DO FOR IN NEXT BREAK RETURN IF ELSE WHILE 
 %token LEof
 %token <int> LInt
 %token <string> LVar
@@ -17,23 +18,59 @@
 %%
 
 statement:
- expr {}
-| statement SEMI statement {}
-| IF conditional_expr LCBRACE statement RCBRACE ELSE LCBRACE statement RCBRACE
-    {}
-| WHILE conditional_expr LCBRACE statement RCBRACE
-    {}
-| LCBRACE statement RCBRACE {}
+  compound_statement {}
+| expr_statement {}
+| selection_statement {}
+| for_statement {}
+| do_while_statement {}
+| while_statement {}
+| jump_statement {}
+
+compound_statement:
+  LCBRACE multiple_statements RCBRACE {}
+
+multiple_statements:
+  statement {}
+| statement multiple_statements {} 
+
+expr_statement:
+  SEMI {}
+| assignment_expr SEMI {}
+
+selection_statement:
+  IF LPAREN expr RPAREN compound_statement {}
+| IF LPAREN expr RPAREN compound_statement ELSE compound_statement {}
+
+for_statement:
+  FOR LPAREN identifier IN expr RPAREN statement {}
+
+do_while_statement:
+  DO statement WHILE LPAREN expr RPAREN SEMI {}
+
+while_statement:
+  WHILE LPAREN expr RPAREN statement {}
+
+jump_statement:
+  NEXT SEMI {}
+| BREAK SEMI {}
+| RETURN SEMI {}
+| RETURN expr SEMI {}
 
 primary_expr:
+  constant {}
+| identifier {}
+| LPAREN conditional_expr RPAREN {}
+
+constant:
   LInt {}
 | LStr {}
-| LVar {}
-| LPAREN conditional_expr RPAREN {}
+
+identifier:
+  LVar {}
 
 argument_expr:
   conditional_expr {}
-| LVar EQUALS  conditional_expr {}
+| identifier EQUALS  conditional_expr {}
 
 argument_expr_list:
   argument_expr {}
@@ -48,7 +85,7 @@ function_definition:
   primary_expr LPAREN argument_expr_list RPAREN {}
 
 attribute_accessor:
-  primary_expr DOT LVar {}
+  primary_expr DOT identifier {}
 
 conditional_expr_list:
   conditional_expr {}
@@ -66,7 +103,6 @@ postfix_expr:
 | attribute_accessor {}
 | indexing {}
 
-
 unary_expr:
   postfix_expr {}
 | EXCLAIM unary_expr {}
@@ -77,8 +113,13 @@ exp_expr:
   unary_expr {}
 | unary_expr CARROT exp_expr {}
 
-program:
-  statement LEof {}
+interpreter_block:
+  LEof {}
+| statement interpreter_block {}
+| function_decl interpreter_block {}
+
+function_decl:
+  LVar LEof{}
 
 seq_expr:
   exp_expr {}
@@ -124,5 +165,5 @@ assignment_expr:
 | conditional_expr EQUALS conditional_expr {}
 
 expr:
-  assignment_expr {}
+  conditional_expr {}
 %%
