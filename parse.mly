@@ -16,24 +16,6 @@
 %left SEMI
 %%
 
-/* conditional_expr:
-  primary_expr {}
-| postfix_expr {}
-| unary_expr {}
-| exp_expr {}
-| seq_expr {}
-| mult_expr {}
-| add_expr {}
-| relational_expr {}
-| equality_expr {}
-| logical_and_expr {}
-| logical_or_expr {} */
-
-/*
-| conditional_expr PLUS  conditional_expr {}
-| conditional_expr TIMES conditional_expr {} */
-
-
 statement:
  expr {}
 | statement SEMI statement {}
