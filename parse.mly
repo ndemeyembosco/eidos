@@ -52,6 +52,7 @@ attribute_accessor:
 
 conditional_expr_list:
   conditional_expr {}
+| conditional_expr COMMA {}
 | conditional_expr COMMA conditional_expr_list {}
 
 indexing:
