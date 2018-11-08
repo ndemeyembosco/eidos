@@ -15,7 +15,7 @@ all: clean
 	$(COMPILER) -c lex.ml
 	# $(COMPILER) -c prettyprint.ml
 	$(COMPILER) -c main.ml
-	$(COMPILER) -o parse_all eidosAST.cmo parse.cmo lex.cmo main.cmo # order matters
+	$(COMPILER) -o parse eidosAST.cmo parse.cmo lex.cmo main.cmo # order matters
 
 clean:
-	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml parse_all *.output
+	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml parse *.output
