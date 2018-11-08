@@ -176,22 +176,17 @@ assignment_expr:
 expr:
   conditional_expr {}
 
-
       /* function declarations */
 
 func_decl  :
-      FUNCTION return_type_spec LVar param_list multiple_statements    {(* TODO *)}
+      FUNCTION return_type_spec identifier param_list compound_statement    {(* TODO *)}
 
 return_type_spec :
       LPAREN type_spec RPAREN             {(* TODO *)}
 
-
 type_spec  :
-      types_all optEnd                    {(* TODO *)}
-
-optEnd    :
-     /* empty */                          {(* TODO *)}
-     | DOLLAR                               {(* TODO *)}
+       types_all                          {(* TODO *)}
+     | types_all DOLLAR                   {(* TODO *)}
 
 types_all   :
      VOID                            {(* TODO *)}
@@ -200,18 +195,15 @@ types_all   :
      | INTEGER                       {(* TODO *)}
      | FLOAT                         {(* TODO *)}
      | STRING                        {(* TODO *)}
-     | OBJECT    opt_obj_cls_spec    {(* TODO *)}
+     | OBJECT                        {(* TODO *)}
+     | OBJECT obj_cls_spec           {(* TODO *)}
      | NUMERIC                       {(* TODO *)}
      | PLUS                          {(* TODO *)}
      | TIMES                         {(* TODO *)}
      | type_abbrv                    {(* TODO *)}
 
-opt_obj_cls_spec  :
-     /* empty */                     {(* TODO *)}
-     | obj_cls_spec                  {(* TODO *)}
-
 type_abbrv        :
-     /* empty */                     {(* TODO *)}
+       type_abbrv1                   {(* TODO *)}
      | type_abbrv type_abbrv1        {(* TODO *)}
 
 type_abbrv1        :
@@ -221,37 +213,29 @@ type_abbrv1        :
    | INTEGERRV                       {(* TODO *)}
    | FLOATRV                         {(* TODO *)}
    | STRINGRV                        {(* TODO *)}
-   | OBJECTRV  opt_obj_cls_spec      {(* TODO *)}
+   | OBJECTRV                        {(* TODO *)}
+   | OBJECTRV  obj_cls_spec          {(* TODO *)}
 
 
 obj_cls_spec       :
-   LESS    LVar    GREAT               {(* TODO *)}
+    LESS    identifier    GREAT       {(* TODO *)}
 
 param_list  :
-    LPAREN  param_list1 RPAREN       {(* TODO *)}
+    LPAREN param_list1 RPAREN       {(* TODO *)}
 
 param_list1 :
     VOID                             {(* TODO *)}
-    | param_spec opt_param_spec1      {(* TODO *)}
-
-opt_param_spec1 :
-    /* empty */                      {(* TODO *)}
-   | opt_param_spec1 opt_param_spec  {(* TODO *)}
+    | param_spec                     {(* TODO *)}   
+    | param_spec opt_param_spec     {(* TODO *)}
 
 opt_param_spec :
    COMMA param_spec                   {(* TODO *)}
 
-
 param_spec     :
-    type_spec   LVar                                 {(* TODO *)}
-  | LBRACE type_spec LVar EQUALS const_ident RBRACE  {(* TODO *)}
-
+    type_spec identifier                                   {(* TODO *)}
+  | LBRACE type_spec identifier EQUALS const_ident RBRACE  {(* TODO *)}
 
 const_ident   :
      constant             {(* TODO *)}
-  |  LVar                 {(* TODO *)}
-
-
-
-
+  |  identifier           {(* TODO *)}
 %%
