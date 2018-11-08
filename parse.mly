@@ -14,7 +14,7 @@ let parse_error s = (* Called by the parser function on error *)
 %token LBRACE RBRACE COMMA DOT DOLLAR NEQ EQ LEQ GEQ IF ELSE FOR IN DO GREAT
 %token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
 %token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
-%token EOF
+%token EOF 
 %token <int> LInt
 %token <float> LFloat
 %token <string> LVar
@@ -125,10 +125,7 @@ exp_expr:
 interpreter_block:
   LEof {}
 | statement interpreter_block {}
-| function_decl interpreter_block {}
-
-function_decl:
-  LVar LEof{} /*to do*/
+| func_decl interpreter_block {}
 
 seq_expr:
   exp_expr {}
@@ -175,4 +172,78 @@ assignment_expr:
 
 expr:
   conditional_expr {}
+
+    /* function declarations */
+
+func_decl  :
+    FUNCTION return_type_spec LVar param_list multiple_statements    {(* TODO *)}
+
+return_type_spec :
+    LPAREN type_spec RPAREN             {(* TODO *)}
+
+
+type_spec  :
+    types_all optEnd                    {(* TODO *)}
+
+optEnd    :
+   /* empty */                          {(* TODO *)}
+   | DOLLAR                               {(* TODO *)}
+
+types_all   :
+   VOID                            {(* TODO *)}
+   | NULL                          {(* TODO *)}
+   | LOGICAL                       {(* TODO *)}
+   | INTEGER                       {(* TODO *)}
+   | FLOAT                         {(* TODO *)}
+   | STRING                        {(* TODO *)}
+   | OBJECT    opt_obj_cls_spec    {(* TODO *)}
+   | NUMERIC                       {(* TODO *)}
+   | PLUS                          {(* TODO *)}
+   | TIMES                         {(* TODO *)}
+   | type_abbrv                    {(* TODO *)}
+
+opt_obj_cls_spec  :
+   /* empty */                     {(* TODO *)}
+   | obj_cls_spec                  {(* TODO *)}
+
+type_abbrv        :
+   /* empty */                     {(* TODO *)}
+   | type_abbrv type_abbrv1        {(* TODO *)}
+
+type_abbrv1        :
+   VOIDRV                          {(* TODO *)}
+ | NULLRV                          {(* TODO *)}
+ | LOGICALRV                       {(* TODO *)}
+ | INTEGERRV                       {(* TODO *)}
+ | FLOATRV                         {(* TODO *)}
+ | STRINGRV                        {(* TODO *)}
+ | OBJECTRV  opt_obj_cls_spec      {(* TODO *)}
+
+
+obj_cls_spec       :
+ LESS    LVar    GREAT               {(* TODO *)}
+
+param_list  :
+  LPAREN  param_list1 RPAREN       {(* TODO *)}
+
+param_list1 :
+  VOID                             {(* TODO *)}
+  | param_spec opt_param_spec1      {(* TODO *)}
+
+opt_param_spec1 :
+  /* empty */                      {(* TODO *)}
+ | opt_param_spec1 opt_param_spec  {(* TODO *)}
+
+opt_param_spec :
+ COMMA param_spec                   {(* TODO *)}
+
+
+param_spec     :
+  type_spec   LVar                                 {(* TODO *)}
+| LBRACE type_spec LVar EQUALS const_ident RBRACE  {(* TODO *)}
+
+
+const_ident   :
+   constant             {(* TODO *)}
+|  LVar                 {(* TODO *)}
 %%
