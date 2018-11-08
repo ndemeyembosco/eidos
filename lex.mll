@@ -10,54 +10,71 @@ open Parse
 let ws         = [' ' '\t' '\n' '\r']
 let ident1     = ['a'-'z']|['A'-'Z']|'_'
 let ident      = ident1 (['0'-'9']| ident1)*
-let exp        = ['E' 'e']['+' '-']?['0'-'9']+
-let decpart    = '.' ['0'-'9']*
+let exp        = ['E''e']['+''-']?['0'-'9']+
+let decpart    = '.'['0'-'9']*
 let digit      = ['0'-'9']+
-let number     = digit decpart? exp?
-let stringChar = ('\\' ['"' '\\' 'n' 'r' 't'] | [^'\"' '\\' '\n' '\r'])+
-let stringLit  =  '\"' stringChar? '\"'
+let number     = ['0'-'9']+decpart?exp?
+let stringChar = ('\\'['"''\\''n''r''t']|[^ '\n''\r''\\''\"'])+
+let stringLit  =  '\"'stringChar?'\"'
 
 rule lexer = parse
   ws+   { lexer lexbuf }
-| '{'   { LCBRACE }
-| '}'   { RCBRACE }
-| '('   { LPAREN }
-| ')'   { RPAREN }
-| '['   { LBRACE }
-| ']'   { RBRACE }
-| '<'   { LESS }
-| '>'   { GREATER }
-| '+'   { PLUS }
-| '-'   { MINUS }
-| '*'   { TIMES }
-| '/'   { DIVIDE }
-| '%'   { MODULO }
-| '^'   { CARROT }
-| '!'   { EXCLAIM }
-| '='   { EQUALS}
-| '?'   { TERNARY }
-| '|'   { OR }
-| '&'   { AND }
-| ':'   { COLON }
-| ';'   { SEMI }
-| ','   { COMMA }
-| '.'   { DOT }
-| '$'   { DOLLAR }
-| "!="  { NEQ }
-| "=="  { EQ }
-| "<="  { LEQ }
-| ">="  { GEQ }
-| "if"  { IF }
-| "else" { ELSE }
-| "while" { WHILE }
-| "for" { FOR }
-| "in"  { IN }
-| "do"  { DO }
-| "break" { BREAK }
-| "next" { NEXT }
-| "return" { RETURN }
+| '{'        { LCBRACE }
+| '}'        { RCBRACE }
+| ';'        { SEMI }
+| '('        { LPAREN }
+| ')'        { RPAREN }
+| '='        { EQUALS }
+| '?'        { TERNARY }
+| '|'        { OR }
+| '&'        { AND }
+| '<'        { LESS }
+| '>'        { GREAT }
+| '+'        { PLUS }
+| '-'        { MINUS }
+| '*'        { TIMES }
+| '/'        { DIVIDE }
+| '%'        { MODULO }
+| ':'        { COLON }
+| '^'        { CARROT }
+| '!'        { EXCLAIM }
+| '['        { LBRACE }
+| ']'        { RBRACE }
+| ','        { COMMA }
+| '.'        { DOT }
+| '$'        { DOLLAR }
+| "!="       { NEQ }
+| "=="       { EQ }
+| "<="       { LEQ }
+| ">="       { GEQ }
+| "if"       { IF }
+| "else"     { ELSE }
+| "for"      { FOR }
+| "in"       { IN }
+| "do"       { DO }
+| "while"    { WHILE }
+| "next"     { NEXT }
+| "break"    { BREAK }
+| "return"   { RETURN }
+| "function" { FUNCTION }
+| "void"     { VOID }
+| "NULL"     { NULL }
+| "logical"  { LOGICAL }
+| "integer"  {INTEGER }
+| "float"    { FLOAT }
+| "string"   { STRING }
+| "object"   { OBJECT }
+| "numeric"  { NUMERIC }
+| "v"        { VOIDRV }
+| "N"        { NULLRV }
+| "l"        { LOGICALRV }
+| "i"        { INTEGERRV }
+| "f"        { FLOATRV }
+| "s"        { STRINGRV }
+| "o"        { OBJECTRV }
 | digit { LInt (int_of_string (Lexing.lexeme lexbuf)) }
 | number { LFloat (float_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
-| stringLit { LStr (Lexing.lexeme lexbuf) }
-| eof { LEof }
+| stringLit {LStr (Lexing.lexeme lexbuf)}
+| eof { EOF }
+| _  {lexer lexbuf}

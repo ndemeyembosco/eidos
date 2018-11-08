@@ -14,7 +14,7 @@ let parse_error s = (* Called by the parser function on error *)
 %token LBRACE RBRACE COMMA DOT DOLLAR NEQ EQ LEQ GEQ IF ELSE FOR IN DO GREAT
 %token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
 %token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
-%token EOF 
+%token EOF
 %token <int> LInt
 %token <float> LFloat
 %token <string> LVar
@@ -123,7 +123,7 @@ exp_expr:
 | exp_expr CARROT unary_expr {}
 
 interpreter_block:
-  LEof {}
+  EOF {}
 | statement interpreter_block {}
 | func_decl interpreter_block {}
 
@@ -146,7 +146,7 @@ relational_expr:
   add_expr {}
 | add_expr LESS relational_expr {}
 | add_expr LEQ relational_expr {}
-| add_expr GREATER relational_expr {}
+| add_expr GREAT relational_expr {}
 | add_expr GEQ relational_expr {}
 
 equality_expr:
