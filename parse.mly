@@ -8,21 +8,21 @@ let parse_error s = (* Called by the parser function on error *)
 %start interpreter_block
 %type <unit> interpreter_block
 
-%token LPAREN RPAREN LCBRACE RCBRACE LBRACE RBRACE
-%token DOLLAR TERNARY OR AND
-%token PLUS MINUS TIMES DIVIDE MODULO
-%token LESS GREATER NEQ EQ LEQ GEQ
-%token COLON CARROT EXCLAIM EQUALS SEMI COMMA DOT 
-%token DO FOR IN NEXT BREAK RETURN IF ELSE WHILE 
-%token LEof
+
+%token LPAREN RPAREN LCBRACE RCBRACE SEMI EQUALS TERNARY OR AND
+%token LESS GEQ PLUS MINUS TIMES DIVIDE MODULO COLON CARROT EXCLAIM
+%token LBRACE RBRACE COMMA DOT DOLLAR NEQ EQ LEQ GEQ IF ELSE FOR IN DO GREAT
+%token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
+%token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
+%token EOF
 %token <int> LInt
 %token <float> LFloat
 %token <string> LVar
 %token <string> LStr
 
-%left PLUS
-%right TIMES
-%left SEMI
+%left LPlus
+%right LTimes
+%left LSemi
 %%
 
 statement:
@@ -39,7 +39,7 @@ compound_statement:
 
 multiple_statements:
   statement {}
-| multiple_statements statement{} 
+| multiple_statements statement{}
 
 expr_statement:
   SEMI {}
@@ -71,7 +71,7 @@ primary_expr:
 
 constant:
   LInt { print_string ("Integer = "^(string_of_int $1)^"\n") }
-| LFloat { print_string ("Float = "^(string_of_float $1)^"\n")}  
+| LFloat { print_string ("Float = "^(string_of_float $1)^"\n")}
 | LStr { }
 
 identifier:
