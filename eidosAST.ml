@@ -1,4 +1,6 @@
-type interp_block = I of ((interp_block1 list) option * peof)
+type interp_block = Empty
+                  | StmtInterp of statement * interp_block
+                  | FuncInterp of fun_decl * interp_block
 
 
 and statement  = Cstmt of compound_stmt
@@ -9,15 +11,7 @@ and statement  = Cstmt of compound_stmt
                 | While of while_stmt
                 | Jump of jump_stmt
 
-and compound_stmt = CmpdStmt of ((statement list) option)
-
-and interp_block1 = Smt of statement
-                   | FnDecl of fun_decl
-
-
-
-and peof = EOF
-
+and compound_stmt = CmpdStmt of (statement list)
 
 and expr_stmt = Estmt of (assign_expr option)
 
@@ -60,24 +54,32 @@ and seq_expr    = Seq of exp_expr * exp_expr option
 
 and exp_expr    = Eexpr of unary_expr * exp_expr option
 
-and unary_expr  = Unary of unary_expr | Post of postf_expr
+and unary_expr  = Post of postfix_expr
+                | NegExpr of unary_expr
+                | PlusExpr of unary_expr
+                | ExclaimExpr of unary_expr
 
-and postf_expr  = Pexpr of primary_expr * (post_helper list) option
+and postfix_expr  = PE of primary_expr
+                  | FE of function_execution
+                  | FD of function_definition
+                  | AA of attribute_accessor
+                  | Ind of indexing
 
-and post_helper = Exp of expr option * (expr list) option
-                 | Paren
-                 | ArgList of argument_expr_list
-                 | Str of string
+and function_execution = primary_expr
 
-and ('a, 'b) either = Left of 'a | Right of 'b
+and function_definition = FuncDef of primary_expr * (arg_expr list)
 
-and constant = (int, string) either
+and attribute_accessor = AttAcc of primary_expr * identifier
 
-and primary_expr = String of string | Const of constant | E of expr
+and indexing = Idx of primary_expr * (conditional_expr list) option
 
-and argument_expr_list = Arg of arg_expr * arg_expr list
+and constant = ConstInt of int
+              | ConstFloat of float
+              | ConstStr of string
 
-and arg_expr = C of conditional_expr | Scond of string * conditional_expr
+and primary_expr = Ident of string | Const of constant | E of expr
+
+and arg_expr = C of conditional_expr | ArgSc of string * conditional_expr
 
 and fun_decl = Func of return_type_spec * string * param_list * compound_stmt
 
