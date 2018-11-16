@@ -1,11 +1,11 @@
 type interp_block = Empty
                   | StmtInterp of statement * interp_block
-                  | FuncInterp of fun_decl * interp_block
+                  | FuncInterp of func_decl * interp_block
 
 
 and statement  = Cstmt of compound_stmt
-                | Expr of expr_stmt
-                | Slct of select_stmt
+                | ExprStmt of expr_stmt
+                | SlctStmt of select_stmt
                 | For of for_stmt
                 | Do of do_while_stmt
                 | While of while_stmt
@@ -15,7 +15,7 @@ and compound_stmt = CmpdStmt of (statement list)
 
 and expr_stmt = Estmt of (assign_expr option)
 
-and select_stmt = If of expr * statement * (statement option)
+and select_stmt = If of expr * compound_stmt * (compound_stmt option)
 
 and for_stmt = ForStmt of string * expr * statement
 
@@ -34,13 +34,17 @@ and assign_expr = Assign of conditional_expr * (conditional_expr option)
 
 and conditional_expr = Cond of l_or_expr * (conditional_expr * conditional_expr) option
 
-and l_or_expr = Lor of l_and_expr * l_and_expr list
+and l_or_expr = Lor of l_and_expr list
 
-and l_and_expr = Land of eqt_expr * eqt_expr list
+and l_and_expr = Land of eqt_expr list
 
-and eqt_expr   = Eqt of rel_expr * rel_expr list
+and eqt_expr   = Eqt of rel_expr * (eq_neq_expr list) option
 
-and rel_expr   = Rel of add_expr * add_expr list
+and eq_neq_expr = Neq of rel_expr | Eq of rel_expr
+
+and rel_expr   = Rel of add_expr * (comparison_expr list) option
+
+and comparison_expr = Less of add_expr | Leq of add_expr | Great of add_expr | Geq of add_expr 
 
 and add_expr  = Add of mult_expr * (add_sub_mul list) option
 
@@ -77,11 +81,13 @@ and constant = ConstInt of int
               | ConstFloat of float
               | ConstStr of string
 
+and identifier = Ident of string
+
 and primary_expr = Ident of string | Const of constant | E of expr
 
 and arg_expr = C of conditional_expr | ArgSc of string * conditional_expr
 
-and fun_decl = Func of return_type_spec * string * param_list * compound_stmt
+and func_decl = Func of return_type_spec * string * param_list * compound_stmt
 
 and return_type_spec = RTySpec of type_spec
 
@@ -104,4 +110,5 @@ and param_list = Void
                 | Pspec of param_spec * param_spec list
 
 and param_spec = PSpec of type_spec * string
-                | PTySpec of type_spec * string * ((constant, string) either)
+                | PTySpecC of type_spec * string * constant
+                | PTySpecI of type_spec * string * identifier
