@@ -18,9 +18,9 @@ exception EOFLex
 %token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
 %token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
 %token EOF
-%token <int> LInt
-%token <float> LFloat
-%token <string> LVar
+%token <int> LInt 
+%token <float> LFloat 
+%token <string> LVar 
 %token <string> LStr
 
 %left LPlus
@@ -144,127 +144,122 @@ mult_div_mod_list:
 | MODULO seq_expr mult_div_mod_list { Mod($2)::$3 }
 
 seq_expr:
-  exp_expr {}
-| exp_expr COLON exp_expr {}
+  exp_expr { Seq($1,None)}
+| exp_expr COLON exp_expr { Seq($1,Some $3) }
 
 exp_expr:
-  unary_expr {}
-| exp_expr CARROT unary_expr {}
+  unary_expr { Eexpr($1,None)}
+| unary_expr CARROT exp_expr { Eexpr($1, Some $3)}
 
 unary_expr:
-  postfix_expr {}
-| EXCLAIM unary_expr {}
-| PLUS unary_expr {}
-| MINUS unary_expr {}
+  postfix_expr { Post($1) }
+| EXCLAIM unary_expr { ExclaimExpr($2) }
+| PLUS unary_expr { PlusExpr($2) }
+| MINUS unary_expr { NegExpr($2) }
 
 /* postfix_expr */
 
 postfix_expr:
-  primary_expr {}
-| function_execution {}
-| function_definition {}
-| attribute_accessor {}
-| indexing {}
+  primary_expr { PE($1) }
+| function_execution { FE($1) }
+| function_definition { FD($1) }
+| attribute_accessor { AA($1) }
+| indexing { Ind($1) }
 
 function_execution:
-  primary_expr LPAREN RPAREN {}
+  primary_expr LPAREN RPAREN { $1 }
 
 function_definition:
-  primary_expr LPAREN argument_expr_list RPAREN {}
+  primary_expr LPAREN argument_expr_list RPAREN { FuncDef($1,$3) }
 
 attribute_accessor:
-  primary_expr DOT identifier {}
+  primary_expr DOT identifier { AttAcc($1,$3) }
 
 indexing:
-  primary_expr LBRACE RBRACE {}
-| primary_expr LBRACE conditional_expr_list RBRACE {}
+  primary_expr LBRACE RBRACE { Idx($1,None)}
+| primary_expr LBRACE conditional_expr_list RBRACE { Idx($1,Some $3)}
 
 conditional_expr_list:
-  conditional_expr {}
-| conditional_expr COMMA {}
-| conditional_expr COMMA conditional_expr_list {}
+  conditional_expr { [$1] }
+| conditional_expr COMMA { [$1] }
+| conditional_expr COMMA conditional_expr_list { $1::$3 }
 
 constant:
-  LInt { print_string ("Integer = "^(string_of_int $1)^"\n") }
-| LFloat { print_string ("Float = "^(string_of_float $1)^"\n")}
-| LStr { }
+  LInt { ConstInt($1) }
+| LFloat { ConstFloat($1) }
+| LStr { ConstStr($1) }
 
 identifier:
-  LVar { print_string ("Identifier = "^$1^"\n") }
+  LVar { $1 }
 
 primary_expr:
-  constant {}
-| identifier {}
-| LPAREN expr RPAREN {}
+  constant { Const($1) }
+| identifier { Ident($1) }
+| LPAREN expr RPAREN { E($2) }
 
 argument_expr:
-  conditional_expr {}
-| identifier EQUALS  conditional_expr {}
+  conditional_expr { C($1) }
+| identifier EQUALS  conditional_expr { ArgSc($1,$3)}
 
 argument_expr_list:
-  argument_expr {}
-| argument_expr_list COMMA argument_expr{}
+  argument_expr { [$1] }
+| argument_expr COMMA argument_expr_list{ $1::$3 }
 
 /* function declarations */
 
-func_decl  :
-      FUNCTION return_type_spec identifier param_list compound_statement    {(* TODO *)}
+func_decl:
+      FUNCTION return_type_spec identifier param_list compound_statement { Func($2,$3,$4,$5) }
 
-return_type_spec :
-      LPAREN type_spec RPAREN             {(* TODO *)}
+return_type_spec:
+      LPAREN type_spec RPAREN { RTySpec($2) }
 
-type_spec  :
-       types_all                          {(* TODO *)}
-     | types_all DOLLAR                   {(* TODO *)}
+type_spec:
+       types_all                          { T($1) }
+     | types_all DOLLAR                   { TDollar($1)}
 
-types_all   :
-     VOID                            {(* TODO *)}
-     | NULL                          {(* TODO *)}
-     | LOGICAL                       {(* TODO *)}
-     | INTEGER                       {(* TODO *)}
-     | FLOAT                         {(* TODO *)}
-     | STRING                        {(* TODO *)}
-     | OBJECT                        {(* TODO *)}
-     | OBJECT obj_cls_spec           {(* TODO *)}
-     | NUMERIC                       {(* TODO *)}
-     | PLUS                          {(* TODO *)}
-     | TIMES                         {(* TODO *)}
-     | type_abbrv                    {(* TODO *)}
+types_all:
+     VOID                            { Void }
+     | NULL                          { Null }
+     | LOGICAL                       { Logical }
+     | INTEGER                       { Integer }
+     | FLOAT                         { Float }
+     | STRING                        { String }
+     | OBJECT                        { Obj(None) }
+     | OBJECT obj_cls_spec           { Obj(Some $2)}
+     | NUMERIC                       { Numeric }
+     | PLUS                          { PlusTy }
+     | TIMES                         { TimesTy }
+     | type_abbrv                    { TyAbrev($1) }
 
-type_abbrv        :
-       type_abbrv1                   {(* TODO *)}
-     | type_abbrv type_abbrv1        {(* TODO *)}
+type_abbrv:
+       type_abbrv1                   { [$1] }
+     | type_abbrv type_abbrv1        { $2::$1 }
 
-type_abbrv1        :
-     VOIDRV                          {(* TODO *)}
-   | NULLRV                          {(* TODO *)}
-   | LOGICALRV                       {(* TODO *)}
-   | INTEGERRV                       {(* TODO *)}
-   | FLOATRV                         {(* TODO *)}
-   | STRINGRV                        {(* TODO *)}
-   | OBJECTRV                        {(* TODO *)}
-   | OBJECTRV  obj_cls_spec          {(* TODO *)}
+type_abbrv1:
+     VOIDRV                          { V }
+   | NULLRV                          { N }
+   | LOGICALRV                       { L }
+   | INTEGERRV                       { I }
+   | FLOATRV                         { F }
+   | STRINGRV                        { S }
+   | OBJECTRV                        { O(None) }
+   | OBJECTRV  obj_cls_spec          { O(Some $2) }
 
 
-obj_cls_spec       :
-    LESS    identifier    GREAT       {(* TODO *)}
+obj_cls_spec:
+    LESS    identifier    GREAT       { OSpec($2) }
 
-param_list  :
-    LPAREN param_list1 RPAREN       {(* TODO *)}
+param_list:
+      LPAREN VOID RPAREN { Void }
+    | LPAREN param_list1 RPAREN       { Pspec($2) }
 
-param_list1 :
-    VOID                             {(* TODO *)}
-    | param_spec                     {(* TODO *)}   
-    | param_spec opt_param_spec     {(* TODO *)}
+param_list1:
+    | param_spec                    { [$1] }   
+    | param_spec COMMA param_list1  { $1::$3 }
 
-opt_param_spec :
-   COMMA param_spec                   {(* TODO *)}
-
-param_spec     :
-    type_spec identifier                                   {(* TODO *)}
-  | LBRACE type_spec identifier EQUALS const_ident RBRACE  {(* TODO *)}
-
-const_ident   :
-     constant             {(* TODO *)}
-  |  identifier           {(* TODO *)}
+param_spec:
+    type_spec identifier  { PSpec($1,$2)}
+  | LBRACE type_spec identifier EQUALS constant RBRACE  { PTySpecC($2,$3,$5)}
+  | LBRACE type_spec identifier EQUALS identifier RBRACE  { PTySpecI($2,$3,$5)}
+  
 %%

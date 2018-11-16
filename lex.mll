@@ -71,7 +71,7 @@ rule lexer = parse
 | "string"   { STRING }
 | "object"   { OBJECT }
 | "numeric"  { NUMERIC }
-| digit  { LInt (int_of_string (Lexing.lexeme lexbuf))}
+| digit  { LInt (int_of_string (Lexing.lexeme lexbuf)) }
 | number { LFloat (float_of_string (Lexing.lexeme lexbuf)) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
 | stringLit { LStr (Lexing.lexeme lexbuf)}

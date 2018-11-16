@@ -71,9 +71,9 @@ and postfix_expr  = PE of primary_expr
 
 and function_execution = primary_expr
 
-and function_definition = FuncDef of primary_expr * (arg_expr list)
+and function_definition = FuncDef of primary_expr * (argument_expr list)
 
-and attribute_accessor = AttAcc of primary_expr * identifier
+and attribute_accessor = AttAcc of primary_expr * string
 
 and indexing = Idx of primary_expr * (conditional_expr list) option
 
@@ -85,15 +85,13 @@ and identifier = Ident of string
 
 and primary_expr = Ident of string | Const of constant | E of expr
 
-and arg_expr = C of conditional_expr | ArgSc of string * conditional_expr
+and argument_expr = C of conditional_expr | ArgSc of string * conditional_expr
 
 and func_decl = Func of return_type_spec * string * param_list * compound_stmt
 
 and return_type_spec = RTySpec of type_spec
 
-and type_spec = T of type_spec_h * dollar option
-
-and dollar = Dollar
+and type_spec = T of type_spec_h | TDollar of type_spec_h
 
 and type_spec_h = Void | Null | Logical | Float | Integer | String
                  | Obj of object_class_spec option
@@ -102,13 +100,13 @@ and type_spec_h = Void | Null | Logical | Float | Integer | String
                  | TimesTy
                  | TyAbrev of tyabrev list
 
-and tyabrev = V | N | L | I | F | S | O | Ocl of object_class_spec option
+and tyabrev = V | N | L | I | F | S | O of object_class_spec option
 
 and object_class_spec = OSpec of string
 
 and param_list = Void
-                | Pspec of param_spec * param_spec list
+                | Pspec of param_spec list
 
 and param_spec = PSpec of type_spec * string
                 | PTySpecC of type_spec * string * constant
-                | PTySpecI of type_spec * string * identifier
+                | PTySpecI of type_spec * string * string
