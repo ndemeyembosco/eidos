@@ -13,7 +13,8 @@ all: clean
 	$(COMPILER) -c parse.ml
 	ocamllex lex.mll
 	$(COMPILER) -c lex.ml
-	# $(COMPILER) -c prettyprint.ml
+	$(COMPILER) -c eidosTypes.ml
+	$(COMPILER) -c eidosInterp.ml
 	$(COMPILER) -c main.ml
 	$(COMPILER) -o parse eidosAST.cmo parse.cmo lex.cmo main.cmo # order matters
 
