@@ -1,4 +1,4 @@
-(* all these are constructors for vector values in ocaml. *)
+(* all these are constructors for arrayor values in ocaml. *)
 exception Nil
 
 
@@ -10,7 +10,7 @@ numeric (integer or float), * (which is the polymorphic type Top)
 , + (which represents all other values other than * and void), or a custom/user defined objects. These are all sugar
 for vectors.*)
 type eidosValue =
-               Void of eidosValue
+               Void
               | Null of (eidosValue array)
               | Logical of (bool array)
               | Integer of (int array)
@@ -21,6 +21,7 @@ type eidosValue =
               | VPlus of (plus_op_value array)
               | VTimes of (eidosValue array)
               | CustomObj of (customObj array)
+              | List of (eidosValue list)
 
 (* type representing + types  *)
 and plus_op_value =
