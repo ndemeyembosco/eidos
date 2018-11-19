@@ -3,6 +3,9 @@ open EidosTypes
 
 exception Undefined
 exception UnboundVar of string
+exception IfExpr of string
+exception ForExcept of string
+exception WhileExcept of string
 
 (* interpblock : env -> interp_block -> env*eidosValue*)  (* return last value of the block*)
 let rec interpBlock env (int_b : interp_block) = match int_b with
@@ -17,37 +20,90 @@ let rec interpBlock env (int_b : interp_block) = match int_b with
 
 (* interpStatement : env -> statement -> env*eidosValue *)
 and interpStatement env (stmt : statement) = match stmt with
-                                    | Cstmt cmpd_stmt -> interpCompoundStmt cmpd_stmt
-                                    | ExprStmt exp_stmt -> interpExprStmt exp_stmt
-                                    | For forstmt -> interpForStmt forstmt
-                                    | Do do_while_stmt -> interpDoWhileStmt do_while_stmt
-                                    | While whl -> interpWhileStmt whl
-                                    | Jump jstmt -> interpJumpStmt jstmt
-                                    | SlctStmt selec -> interpSelectStmt selec 
+                                    | Cstmt cmpd_stmt -> interpCompoundStmt env cmpd_stmt
+                                    | ExprStmt exp_stmt -> interpExprStmt env exp_stmt
+                                    | For forstmt -> interpForStmt env forstmt
+                                    | Do do_while_stmt -> interpDoWhileStmt env do_while_stmt
+                                    | While whl -> interpWhileStmt env whl
+                                    | Jump jstmt -> interpJumpStmt env jstmt
+                                    | SlctStmt selec -> interpSelectStmt env selec
 
 (* interpCompoundStmt : env -> compound_stmt -> env*eidosValue *)
-and interpCompoundStmt = raise Undefined
+and interpCompoundStmt env (cmpd : compound_stmt) = match cmpd with
+                                           |CmpdStmt []      -> (env, Void)
+                                           |CmpdStmt (s::ss) ->
+                                                             let (new_env, value) = interpStatement env s in
+                                                             interpCompoundStmt new_env (CmpdStmt ss)
+
 
 (* interpExprStmt : env -> expr_stmt -> env*eidosValue *)
-and interpExprStmt = raise Undefined
+and interpExprStmt env (expr : expr_stmt) = match expr with
+                               |Estmt None     -> (env, Void)
+                               |Estmt ass_expr -> interpAssignExpr ass_expr
 
 (* interpSelectStmt : env -> select_stmt -> env*eidosValue *)
-and interpSelectStmt = raise Undefined
+and interpSelectStmt env (slct : select_stmt) = match slct with
+                               | If (e, cmpd, v) -> match v with
+                                                | None -> let (new_env, cond) = interpExpr env e in
+                                                                (match cond with
+                                                                       | (Logical boolean) -> if boolean == Array.of_list [true] then
+                                                                                   interpCompoundStmt new_env cmpd else
+                                                                                   (new_env, Void)
+                                                                       | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
+                                                |(Some cmpd1) -> let (new_env, cond) = interpExpr env e in
+                                                                      (match cond with
+                                                                      | (Logical boolean) -> if boolean == Array.of_list [true] then
+                                                                                         interpCompoundStmt new_env cmpd else
+                                                                                         interpCompoundStmt new_env cmpd1
+                                                                      | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
+
 
 (* interpForStmt : env -> for_stmt -> env*eidosValue *)
-and interpForStmt = raise Undefined
+and interpForStmt env (forStmt : for_stmt) = match forStmt with
+                         |ForStmt (str, expr, stmt) ->  let rec loop e =
+                                                             let (new_env, value) = interpExpr e expr in (* probably a try catch to recover from errors! *)
+                                                             (match value with
+                                                              | Void -> (new_env, Void)
+                                                              | _    -> let (env1, _) = interpStatement (Env.add str value e) stmt in
+                                                                        loop env1) in
+                                                               loop env
+
 
 (* interpDoWhileStmt : env -> do_while_stmt -> env*eidosValue *)
-and interpDoWhileStmt = raise Undefined
+and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
+                         | DoWhile (stmt, expr)  ->
+                                               let (new_env, value) = interpStatement env stmt in
+                                                let (env1, cond) = interpExpr new_env expr in
+                                                  (match cond with
+                                                    |Logical boolean -> if boolean == Array.of_list [false] then
+                                                                            (new_env, value) else
+                                                                         interpWhileStmt new_env (WhileStmt (expr, stmt))
+                                                    | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!"))
 
-(* interpWhileStmt : env -> while_stmt -> env*eidosValue *)
-and interpWhileStmt = raise Undefined
+
+
+(* interpWhileStmt : env -> while_stmt -> env*eidosValue *) (* Implement loop unrolling! *)
+and interpWhileStmt env (whileStmt : while_stmt) = match whileStmt with
+                                          | WhileStmt (expr, stmt) ->
+                                                     interpSelectStmt env
+                                                                  (If (expr, CmpdStmt [stmt]
+                                                                    , Some
+                                                                    (CmpdStmt
+                                                                      [While
+                                                                      (WhileStmt (expr,stmt))
+                                                                      ]
+                                                                    )))
+
 
 (* interpJumpStmt : env -> jump_stmt -> env*eidosValue *)
-and interpJumpStmt = raise Undefined
+and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* this might be very wrong! *)
+                      |Next  -> (env, Void)
+                      |Break -> (env, Void)
+                      |Return None -> (env, Void)
+                      |Return (Some expr) -> interpExpr env expr
 
 (* interpExpr : env -> expr -> env*eidosValue *)
-and interpExpr = raise Undefined
+and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
 (* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
 and interpAssignExpr = raise Undefined
@@ -119,7 +175,8 @@ and interpConstant env  c = match c with
 (* interpIdentifier : env -> identifier -> env*eidosValue *)
 and interpIdentifier env (id : identifier) = match id with
                          | Ident var_name -> match Env.find_opt var_name env with
-                               | None -> raise (UnboundVar var_name)
+                               | None -> (env, Void) (* probably better to raise an exception,
+                                                     but then complicates interpretting other things such as for loop! *)
                                | Some v -> (env, v)
 
  (* interpPrimaryExpr : env -> primary_expr -> env*eidosValue *)
