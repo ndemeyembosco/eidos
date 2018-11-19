@@ -38,13 +38,13 @@ and l_or_expr = Lor of l_and_expr list
 
 and l_and_expr = Land of eqt_expr list
 
-and eqt_expr   = Eqt of rel_expr * (eq_neq_expr list) option
+and eqt_expr   = Eqt of rel_expr * (eq_neq_expr list)
 
 and eq_neq_expr = Neq of rel_expr | Eq of rel_expr
 
 and rel_expr   = Rel of add_expr * (comparison_expr list) option
 
-and comparison_expr = Less of add_expr | Leq of add_expr | Great of add_expr | Geq of add_expr 
+and comparison_expr = Less of add_expr | Leq of add_expr | Great of add_expr | Geq of add_expr
 
 and add_expr  = Add of mult_expr * (add_sub_mul list) option
 
@@ -98,9 +98,8 @@ and type_spec_h = Void | Null | Logical | Float | Integer | String
                  | Numeric
                  | PlusTy
                  | TimesTy
-                 | TyAbrev of tyabrev list
+                 | TyList of type_spec_h list 
 
-and tyabrev = V | N | L | I | F | S | O of object_class_spec option
 
 and object_class_spec = OSpec of string
 

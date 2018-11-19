@@ -18,9 +18,9 @@ exception EOFLex
 %token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
 %token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
 %token EOF
-%token <int> LInt 
-%token <float> LFloat 
-%token <string> LVar 
+%token <int> LInt
+%token <float> LFloat
+%token <string> LVar
 %token <string> LStr
 
 %left LPlus
@@ -93,13 +93,13 @@ logical_and_expr_list:
 logical_and_expr:
   equality_expr_list { Land($1) }
 
-equality_expr_list:  
+equality_expr_list:
   equality_expr { [$1] }
 | equality_expr_list AND equality_expr { $3::$1 }
 
 equality_expr:
-  relational_expr { Eqt($1,None) }
-| relational_expr relational_expr_list { Eqt($1, Some $2) }
+  relational_expr { Eqt($1,[]) }
+| relational_expr relational_expr_list { Eqt($1, $2) }
 
 relational_expr_list:
   NEQ relational_expr { [Neq($2)] }
@@ -229,21 +229,21 @@ types_all:
      | NUMERIC                       { Numeric }
      | PLUS                          { PlusTy }
      | TIMES                         { TimesTy }
-     | type_abbrv                    { TyAbrev($1) }
+     | type_abbrv                    { TyList($1) }
 
 type_abbrv:
        type_abbrv1                   { [$1] }
      | type_abbrv type_abbrv1        { $2::$1 }
 
 type_abbrv1:
-     VOIDRV                          { V }
-   | NULLRV                          { N }
-   | LOGICALRV                       { L }
-   | INTEGERRV                       { I }
-   | FLOATRV                         { F }
-   | STRINGRV                        { S }
-   | OBJECTRV                        { O(None) }
-   | OBJECTRV  obj_cls_spec          { O(Some $2) }
+     VOIDRV                          { Void }
+   | NULLRV                          { Null }
+   | LOGICALRV                       { Logical }
+   | INTEGERRV                       { Integer }
+   | FLOATRV                         { Float }
+   | STRINGRV                        { String }
+   | OBJECTRV                        { Obj(None) }
+   | OBJECTRV  obj_cls_spec          { Obj(Some $2) }
 
 
 obj_cls_spec:
@@ -254,12 +254,12 @@ param_list:
     | LPAREN param_list1 RPAREN       { Pspec($2) }
 
 param_list1:
-    | param_spec                    { [$1] }   
+    | param_spec                    { [$1] }
     | param_spec COMMA param_list1  { $1::$3 }
 
 param_spec:
     type_spec identifier  { PSpec($1,$2)}
   | LBRACE type_spec identifier EQUALS constant RBRACE  { PTySpecC($2,$3,$5)}
   | LBRACE type_spec identifier EQUALS identifier RBRACE  { PTySpecI($2,$3,$5)}
-  
+
 %%

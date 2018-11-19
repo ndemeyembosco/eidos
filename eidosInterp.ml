@@ -6,6 +6,8 @@ exception UnboundVar of string
 exception IfExpr of string
 exception ForExcept of string
 exception WhileExcept of string
+exception TernaryExcept of string
+exception BoolEvalExcept of string
 
 (* interpblock : env -> interp_block -> env*eidosValue*)  (* return last value of the block*)
 let rec interpBlock env (int_b : interp_block) = match int_b with
@@ -109,16 +111,49 @@ and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 and interpAssignExpr = raise Undefined
 
 (* interpConditionalExpr : env -> conditional_expr -> env*eidosValue *)
-and interpConditionalExpr = raise Undefined
+and interpConditionalExpr env (Cond (lorexp, twoconds_opt) : conditional_expr )= match twoconds_opt with
+                                        |None                    -> interpLorExpr env lorexp
+                                        |Some (cond_e1, cond_e2) ->
+                                                             let (new_env, value) = interpLorExpr env lorexp in
+                                                             (match value with
+                                                             |Logical boolean -> if boolean == Array.of_list [true] then
+                                                                                     interpConditionalExpr new_env cond_e1 else
+                                                                                     interpConditionalExpr new_env cond_e2
+
+                                                             | _ -> raise (TernaryExcept "ternary operator expects a boolean as first argument! "))
+
 
 (* interpLorExpr : env -> l_or_xpr -> env*eidosValue *)
-and interpLorExpr = raise Undefined
+and interpLorExpr env (Lor l : l_or_expr) = match l with
+                                   | []      -> (env, Void)
+                                   | (x::xs) ->
+                                             let (new_env, value) = interpLAndExpr env x in
+                                               let (env1, value1) = interpLorExpr new_env (Lor xs) in
+                                               (match (value, value1) with
+                                                   |(Logical boolean, Logical boolean2) -> (env1, Logical (Array.map2 (||) boolean boolean2))
+                                                   |(_, _)                              -> raise (BoolEvalExcept "or can only be called on logical values!"))
+
 
 (* interpLAndExpr : env -> l_and_expr -> env*eidosValue *)
-and interpLAndExpr = raise Undefined
+and interpLAndExpr env (Land l : l_and_expr) = match l with
+                                   | []      -> (env, Void)
+                                   | (x::xs) ->
+                                             let (new_env, value) = interpEqtExpr env x in
+                                              let (env1, value1) = interpLAndExpr new_env (Land xs) in
+                                              (match (value, value1) with
+                                                   |(Logical boolean, Logical boolean2) -> (env1, Logical (Array.map2 (&&) boolean boolean2))
+                                                   |(_, _)                              -> raise (BoolEvalExcept "and can only be called on logical values!"))
 
 (* interpEqtExpr : env -> eqt_expr -> env*eidosValue *)
-and interpEqtExpr = raise Undefined
+and interpEqtExpr env (Eqt (relexpr, eqneqe_l)) = match eqneqe_l with
+                                    | []      -> interpRelExpr env relexpr
+                                    | (e::es) -> (match e with
+                                            | (Neq rel) ->
+                                                       let (new_env, value) = interpRelExpr env relexpr in
+                                                        let (env1, value1) = interpEqtExpr new_env (Eqt (rel, es)) in
+                                                        raise Undefined
+                                            | _ -> raise Undefined)
+
 
 (* interpEqNeqExpr : env -> eq_neq_expr -> env*eidosValue *)
 and interpEqNeqExpr = raise Undefined
