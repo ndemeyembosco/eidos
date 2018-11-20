@@ -8,6 +8,7 @@ exception ForExcept of string
 exception WhileExcept of string
 exception TernaryExcept of string
 exception BoolEvalExcept of string
+exception DebugVal of string
 
 (* interpblock : env -> interp_block -> env*eidosValue*)  (* return last value of the block*)
 let rec interpBlock env (int_b : interp_block) = match int_b with
@@ -15,10 +16,10 @@ let rec interpBlock env (int_b : interp_block) = match int_b with
                       | StmtInterp(stmt, int_b1) ->
                                                  let (new_env, _) = interpStatement env stmt in
                                                     interpBlock new_env int_b1
-                      | FuncInterp(func_decl, int_b1) ->
+                      (*| FuncInterp(func_decl, int_b1) ->
                                                   let (new_env, _) = interpFuncDecl env func_decl in
                                                     interpBlock new_env int_b1
-
+                        *)
 
 (* interpStatement : env -> statement -> env*eidosValue *)
 and interpStatement env (stmt : statement) = match stmt with
@@ -40,8 +41,9 @@ and interpCompoundStmt env (cmpd : compound_stmt) = match cmpd with
 
 (* interpExprStmt : env -> expr_stmt -> env*eidosValue *)
 and interpExprStmt env (expr : expr_stmt) = match expr with
-                               |Estmt None     -> (env, Void)
-                               |Estmt ass_expr -> interpAssignExpr ass_expr
+                               |Estmt ass_expr -> match ass_expr with
+                                         None            -> (env, Void)
+                                        |Some ass_expr_e -> interpAssignExpr env ass_expr_e
 
 (* interpSelectStmt : env -> select_stmt -> env*eidosValue *)
 and interpSelectStmt env (slct : select_stmt) = match slct with
@@ -108,7 +110,27 @@ and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* th
 and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
 (* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
-and interpAssignExpr = raise Undefined
+and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! just an attempt to get sth working : *)
+                                 match ass with
+                                 | Assign (cond, cond_exp_opt) -> let (new_env, value) = interpConditionalExpr env cond in (* value is string! *)
+                                                                        (match cond_exp_opt with
+                                                                        | None       -> (match value with
+                                                                              String str -> let strArr = Array.to_list str in
+                                                                                              match strArr with
+                                                                                              | []     -> raise (DebugVal "variable name should not be empty")
+                                                                                              | (x::xs) -> (Env.add x Void env, Void)
+                                                                              | _          -> raise (DebugVal "varible should be string!"))
+                                                                        | Some cond1 ->
+                                                                                let (env1, value1) = interpConditionalExpr new_env cond1 in
+                                                                                (match value with
+                                                                                   String str -> let strArr = Array.to_list str in
+                                                                                                match strArr with
+                                                                                                | []     -> raise (DebugVal "variable name should not be empty")
+                                                                                                | (x::xs) -> (Env.add x value1 env, Void))
+                                                                                  |_           -> raise (DebugVal "varible should be string!")
+                                                                                )
+
+
 
 (* interpConditionalExpr : env -> conditional_expr -> env*eidosValue *)
 and interpConditionalExpr env (Cond (lorexp, twoconds_opt) : conditional_expr )= match twoconds_opt with
@@ -151,72 +173,95 @@ and interpEqtExpr env (Eqt (relexpr, eqneqe_l)) = match eqneqe_l with
                                             | (Neq rel) ->
                                                        let (new_env, value) = interpRelExpr env relexpr in
                                                         let (env1, value1) = interpEqtExpr new_env (Eqt (rel, es)) in
-                                                        raise Undefined
-                                            | _ -> raise Undefined)
+                                                        (env1, Logical (Array.of_list [(not (value = value1))]))
+                                            | (Eq rel) -> let (new_env, value) = interpRelExpr env relexpr in
+                                                            let (env1, value1) = interpEqtExpr new_env (Eqt (rel, es)) in
+                                                             (env1, Logical (Array.of_list [(value = value1)])))
 
-
-(* interpEqNeqExpr : env -> eq_neq_expr -> env*eidosValue *)
-and interpEqNeqExpr = raise Undefined
 
 (* interpRelExpr : env -> rel_xpr -> env*eidosValue *)
-and interpRelExpr = raise Undefined
-
-(* interpComparisonExpr : env -> comparison_expr -> env*eidosValue *)
-and interpComparisonExpr = raise Undefined
-
+and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
+                                              | None         -> interpAddExpr env add_e    (* this option list stuff doesn't make sense! [] is really same as None! *)
+                                              | Some []      -> interpAddExpr env add_e
+                                              | Some (c::cs) -> let interp_add_with op a_expr =
+                                                                              let (new_env, value) = interpAddExpr env add_e in
+                                                                              let (env1, value1)   = interpRelExpr new_env (Rel (a_expr, Some cs)) in
+                                                                              (env1, Logical (Array.of_list [op value value1])) in (match c with
+                                                             | Less addexpr  -> interp_add_with (<) addexpr
+                                                             | Leq addexpr   -> interp_add_with (<=) addexpr
+                                                             | Great addexpr -> interp_add_with (>) addexpr
+                                                             | Geq addexpr   -> interp_add_with (>=) addexpr
+                                                             )
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
-and interpAddExpr = raise Undefined
+and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
+                                                | None         -> interpMultExpr env mult_e (*throw away Plus? probably an error!*)
+                                                | Some []       -> interpMultExpr env mult_e
+                                                | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
+                                                                                 let (new_env, value) = interpMultExpr env mult_e in
+                                                                                 let (env1, value1) = interpAddExpr new_env (Add (m_expr, Some aas)) in  (* type promotion stuff *)
+                                                                                  (match (value, value1) with
+                                                                                          |(Integer narray, Integer marray) -> (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                          |(Float narray, Float marray)     -> (env1, Float (Array.map2 (op2) narray marray))
+                                                                                          |(Integer narray, Float marray)   -> (env1, Float (Array.map2 (fun x y -> op2 (float_of_int x) y ) narray marray))
+                                                                                          |(Float narray, Integer marray)   -> (env1, Float (Array.map2 (fun x y -> op2 x (float_of_int y) ) narray marray))
+                                                                                          |(_, _) -> raise (TyExcept "incompatible add!")) in
+                                                                  (match a with
+                                                                    | Plus mul  -> interp_mult_with (+) (+.) mul
+                                                                    | Minus mul -> interp_mult_with (-) (-.) mul)
 
 (* interpAddSubMulExpr : env -> add_sub_mul_expr -> env*eidosValue *)
-and interpAddSubMulExpr = raise Undefined
+(*and interpAddSubMulExpr = raise (DebugVal "I fail Addsubmul!")*)
 
 (* interpMultExpr : env -> mult_expr -> env*eidosValue *)
-and interpMultExpr = raise Undefined
+and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr ) = interpSeqExpr env seq_e
 
 (* interpMulDivSeqExpr : env -> mul_div_seq -> env*eidosValue *)
-and interpMulDivSeqExpr = raise Undefined
+(*and interpMulDivSeqExpr = raise (DebugVal "I fail muldivseq!")*)
 
 (* interpSeqExpr : env -> seq_expr -> env*eidosValue *)
-and interpSeqExpr = raise Undefined
+and interpSeqExpr env (Seq (exp_e, expe_opt) : seq_expr ) = interpExpExpr env exp_e
 
 (* interpExpExpr : env -> exp_expr -> env*eidosValue *)
-and interpExpExpr = raise Undefined
+and interpExpExpr env (Eexpr (unary_e, unarye_opt) : exp_expr ) = interpUnaryExpr env unary_e
 
 (* interpUnaryExpr : env -> unary_expr -> env*eidosValue *)
-and interpUnaryExpr = raise Undefined
+and interpUnaryExpr env (Post (post_e) : unary_expr ) = interpPostFixExpr env post_e
 
 (* interpPostFixExpr : env -> postfix_expr -> env*eidosValue *)
-and interpPostFixExpr = raise Undefined
+and interpPostFixExpr env (PE (prim_e) : postfix_expr ) = interpPrimaryExpr env prim_e
 
 (* interpFuncExec : env -> function_execution -> env*eidosValue *)
-and interpFuncExec = raise Undefined
+(*and interpFuncExec = raise (DebugVal "I fail interpFuncExec!")*)
 
 (* interpFuncDefn : env -> function_definition -> env*eidosValue *)
-and interpFuncDefn = raise Undefined
+(*and interpFuncDefn = raise (DebugVal "I fail interpFuncDef!")*)
 
 (* interpAttributeAccessor : env -> attribute_accessor -> env*eidosValue *)
-and interpAttributeAccessor = raise Undefined
+(*and interpAttributeAccessor = raise (DebugVal "I fail interpAA!")*)
 
 (* interpIndexing : env -> indexing -> env*eidosValue *)
-and interpIndexing = raise Undefined
+(*and interpIndexing = raise (DebugVal "I fail interpIndexing!")*)
+
+ (* interpPrimaryExpr : env -> primary_expr -> env*eidosValue *)
+and interpPrimaryExpr env (prim_e : primary_expr) = match prim_e with
+                                                        Const c -> interpConstant env c
+                                                      | Ident i -> interpIdentifier env i
+                                                      | E e -> interpExpr env e
 
 (* interpConstant : env -> constant -> env*eidosValue *)
-and interpConstant env  c = match c with
+and interpConstant env c = match c with
                       | ConstInt n -> (env, Integer (Array.of_list [n]))
                       | ConstFloat f -> (env, Float (Array.of_list [f]))
                       | ConstStr str -> (env, String (Array.of_list [str]))
 
 
 (* interpIdentifier : env -> identifier -> env*eidosValue *)
-and interpIdentifier env (id : identifier) = match id with
-                         | Ident var_name -> match Env.find_opt var_name env with
+and interpIdentifier env (id : string) = match id with
+                         | var_name -> match Env.find_opt var_name env with
                                | None -> (env, Void) (* probably better to raise an exception,
                                                      but then complicates interpretting other things such as for loop! *)
                                | Some v -> (env, v)
-
- (* interpPrimaryExpr : env -> primary_expr -> env*eidosValue *)
-and interpPrimaryExpr = raise Undefined
-
+(*
 (* interpArgumentExpr : env -> argument_expr -> env*eidosValue *)
 and interpArgumentExpr = raise Undefined
 
@@ -240,6 +285,21 @@ and interpParamList = raise Undefined
 
 (* interpParamSpec : env -> param_spec -> env*eidosValue *)
 and interpParamSpec = raise Undefined
-
+*)
 (* function to start interpreting *)
 let interp = interpBlock empty_env
+
+(******************************************)
+let get_prog () =
+  let argv = Sys.argv in
+  let _ =
+    if Array.length argv != 2
+    then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-interpret]\n");
+          exit 1) in
+  let ch = open_in argv.(1) in
+  Parse.interpreter_block Lex.lexer (Lexing.from_channel ch)
+
+let _ =
+  let prog = get_prog () in
+  interp prog
+

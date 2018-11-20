@@ -116,10 +116,10 @@ comparison_expr_list:
 | LEQ add_expr { [Leq($2)] }
 | GREAT add_expr { [Great($2)] }
 | GEQ add_expr { [Geq($2)] }
-| add_expr LESS comparison_expr_list { Less($1)::$3 }
-| add_expr LEQ comparison_expr_list { Leq($1)::$3 }
-| add_expr GREAT comparison_expr_list { Great($1)::$3 }
-| add_expr GEQ comparison_expr_list { Geq($1)::$3 }
+| LESS add_expr comparison_expr_list { Less($2)::$3 }
+| LEQ add_expr comparison_expr_list { Leq($2)::$3 }
+| GREAT add_expr comparison_expr_list { Great($2)::$3 }
+| GEQ add_expr comparison_expr_list { Geq($2)::$3 }
 
 add_expr:
   mult_expr { Add($1,None) }
@@ -184,6 +184,11 @@ conditional_expr_list:
 | conditional_expr COMMA { [$1] }
 | conditional_expr COMMA conditional_expr_list { $1::$3 }
 
+primary_expr:
+  constant { Const($1) }
+| identifier { Ident($1) }
+| LPAREN expr RPAREN { E($2) }
+
 constant:
   LInt { ConstInt($1) }
 | LFloat { ConstFloat($1) }
@@ -191,11 +196,6 @@ constant:
 
 identifier:
   LVar { $1 }
-
-primary_expr:
-  constant { Const($1) }
-| identifier { Ident($1) }
-| LPAREN expr RPAREN { E($2) }
 
 argument_expr:
   conditional_expr { C($1) }

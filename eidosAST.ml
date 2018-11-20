@@ -77,13 +77,13 @@ and attribute_accessor = AttAcc of primary_expr * string
 
 and indexing = Idx of primary_expr * (conditional_expr list) option
 
+and primary_expr = Ident of string | Const of constant | E of expr
+
 and constant = ConstInt of int
               | ConstFloat of float
               | ConstStr of string
 
 and identifier = Ident of string
-
-and primary_expr = Ident of string | Const of constant | E of expr
 
 and argument_expr = C of conditional_expr | ArgSc of string * conditional_expr
 
