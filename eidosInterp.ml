@@ -152,8 +152,9 @@ and interpLorExpr env (Lor l : l_or_expr) = match l with
                                              let (new_env, value) = interpLAndExpr env x in
                                                let (env1, value1) = interpLorExpr new_env (Lor xs) in
                                                (match (value, value1) with
+                                                   |(_,Void)                            -> (env1, value) (*to pass the first value upwards*)
                                                    |(Logical boolean, Logical boolean2) -> (env1, Logical (Array.map2 (||) boolean boolean2))
-                                                   |(_, _)                              -> raise (BoolEvalExcept "or can only be called on logical values!"))
+                                                   |(_, _)                              -> raise (BoolEvalExcept "OR can only be called on logical values!"))
 
 
 (* interpLAndExpr : env -> l_and_expr -> env*eidosValue *)
@@ -163,8 +164,9 @@ and interpLAndExpr env (Land l : l_and_expr) = match l with
                                              let (new_env, value) = interpEqtExpr env x in
                                               let (env1, value1) = interpLAndExpr new_env (Land xs) in
                                               (match (value, value1) with
+                                                   |(_,Void)                            -> (env1, value) (*to pass the first value upwards*)
                                                    |(Logical boolean, Logical boolean2) -> (env1, Logical (Array.map2 (&&) boolean boolean2))
-                                                   |(_, _)                              -> raise (BoolEvalExcept "and can only be called on logical values!"))
+                                                   |(_, _)                              -> raise (BoolEvalExcept "AND can only be called on logical values!"))
 
 (* interpEqtExpr : env -> eqt_expr -> env*eidosValue *)
 and interpEqtExpr env (Eqt (relexpr, eqneqe_l)) = match eqneqe_l with
@@ -258,7 +260,7 @@ and interpConstant env c = match c with
 (* interpIdentifier : env -> identifier -> env*eidosValue *)
 and interpIdentifier env (id : string) = match id with
                          | var_name -> match Env.find_opt var_name env with
-                               | None -> (env, Void) (* probably better to raise an exception,
+                               | None -> (env, String([|var_name|])) (* probably better to raise an exception,
                                                      but then complicates interpretting other things such as for loop! *)
                                | Some v -> (env, v)
 (*
