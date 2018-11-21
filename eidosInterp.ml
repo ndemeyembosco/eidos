@@ -129,7 +129,7 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                                    String str -> let strArr = Array.to_list str in
                                                                                                 match strArr with
                                                                                                 | []     -> raise (DebugVal "variable name should not be empty")
-                                                                                                | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^"to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                                                | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                                                              (Env.add x value1 env, Void))
                                                                                   |_           -> raise (DebugVal "varible should be string!")
                                                                                 )
@@ -202,9 +202,9 @@ and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
                                                              )
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
 and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
-                                                | None         -> let (evn, value) = interpMultExpr env mult_e in(*throw away Plus? probably an error!*)
+                                                | None         -> let (env, value) = interpMultExpr env mult_e in(*throw away Plus? probably an error!*)
                                                                         (*print_string ((string_of_eidos_val value)^"\n" );*)
-                                                                        (evn,value)
+                                                                        (env,value)
                                                 | Some []       -> interpMultExpr env mult_e
                                                 | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
@@ -223,7 +223,27 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
 (*and interpAddSubMulExpr = raise (DebugVal "I fail Addsubmul!")*)
 
 (* interpMultExpr : env -> mult_expr -> env*eidosValue *)
-and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr ) = interpSeqExpr env seq_e
+and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) = 
+        let (env, value) = interpSeqExpr env seq_e in
+                match seqe_opt with
+                          None -> (env,value)
+                        | Some [] -> (env,value)
+                        | Some (sehead::setail) -> 
+                                let interp_seq_with op1 op2 seq_expr = 
+                                        let (env1, value1) = interpMultExpr env (Mult (seq_expr, Some setail)) in
+                                                (match (value,value1) with
+                                                        (Integer narray, Integer marray) -> (env1, Integer (Array.map2 (op1) narray marray))
+                                                      | (Float narray, Float marray)     -> (env1, Float (Array.map2 (op2) narray marray))
+                                                      | (Integer narray, Float marray)   -> (env1, Float (Array.map2 (fun x y -> op2 (float_of_int x) y ) narray marray))
+                                                      | (Float narray, Integer marray)   -> (env1, Float (Array.map2 (fun x y -> op2 x (float_of_int y) ) narray marray))
+                                                      | (_, _) -> raise (TyExcept "Incompatible Mult!")
+                                                ) in
+                                                    (match sehead with
+                                                          Times seq  -> interp_seq_with ( * )  ( *.) seq
+                                                        | Div seq -> interp_seq_with (/) (/.) seq 
+                                                    )
+                                                                            
+                                          
 
 (* interpMulDivSeqExpr : env -> mul_div_seq -> env*eidosValue *)
 (*and interpMulDivSeqExpr = raise (DebugVal "I fail muldivseq!")*)
