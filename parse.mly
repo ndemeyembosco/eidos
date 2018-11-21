@@ -194,8 +194,8 @@ identifier:
 
 primary_expr:
   constant { Const($1) }
-| identifier { Ident($1) }
-| LPAREN expr RPAREN { E($2) }
+| identifier { Id($1) }
+| LPAREN expr RPAREN { Ex($2) }
 
 argument_expr:
   conditional_expr { C($1) }
@@ -250,7 +250,7 @@ obj_cls_spec:
     LESS    identifier    GREAT       { OSpec($2) }
 
 param_list:
-      LPAREN VOID RPAREN { Void }
+      LPAREN VOID RPAREN { VOID }
     | LPAREN param_list1 RPAREN       { Pspec($2) }
 
 param_list1:

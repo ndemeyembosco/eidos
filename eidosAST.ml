@@ -83,7 +83,7 @@ and constant = ConstInt of int
 
 and identifier = Ident of string
 
-and primary_expr = Ident of string | Const of constant | E of expr
+and primary_expr = Id of string | Const of constant | Ex of expr
 
 and argument_expr = C of conditional_expr | ArgSc of string * conditional_expr
 
@@ -98,12 +98,12 @@ and type_spec_h = Void | Null | Logical | Float | Integer | String
                  | Numeric
                  | PlusTy
                  | TimesTy
-                 | TyList of type_spec_h list 
+                 | TyList of type_spec_h list
 
 
 and object_class_spec = OSpec of string
 
-and param_list = Void
+and param_list = VOID
                 | Pspec of param_spec list
 
 and param_spec = PSpec of type_spec * string

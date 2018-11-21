@@ -1,5 +1,7 @@
+open EidosInterp
 open EidosAST
 open Parse
+open EidosTypes
 (* open Prettyprint *)
 
 
@@ -21,7 +23,7 @@ let get_prog () =
      let tokens = get_tokens () in
      match tokens with
          | None    -> exit 0
-         | Some ts -> try Some (Parse.interpreter_block Lex.lexer ts)
+         | Some ts -> try Some (interpreter_block Lex.lexer ts)
                       with Parsing.Parse_error -> None
 
 (* let string_of_unit () = "()" *)
@@ -30,5 +32,10 @@ let _ =
   let prog = get_prog () in
   match prog  with
         | None   -> print_string ("Parse error! \n")
-        | Some p -> print_string ("prog = () \n")
+        | Some p -> try print_string(string_of_eidos_val (snd (interp p)) ^ "\n")
+  with e ->
+    let msg = Printexc.to_string e
+    and stack = Printexc.get_backtrace () in
+    Printf.eprintf "there was an error: %s%s\n" msg stack;
+    raise e
   (* print_string ("ans = " ^ string_of_interp_b prog ^"\n") *)
