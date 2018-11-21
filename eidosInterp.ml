@@ -117,11 +117,11 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                         (match cond_exp_opt with
                                                                         | None       -> (match value with
                                                                               String str -> let strArr = Array.to_list str in
-                                                                                        match strArr with
+                                                                                        (match strArr with
                                                                                          | []     -> raise (DebugVal "variable name should not be empty")
                                                                                          | (x::xs) -> (print_string "Added with no value to env\n");
-                                                                                                      (Env.add x Void env, Void)
-                                                                              | _          -> raise (DebugVal "varible should be string!"))
+                                                                                                      (Env.add x Void env, Void))
+                                                                              | _          -> (new_env,value))
                                                                         | Some cond1 ->
                                                                                 let (env1, value1) = interpConditionalExpr new_env cond1 in
                                                                                 print_string ((string_of_eidos_val value1)^"\n" );
