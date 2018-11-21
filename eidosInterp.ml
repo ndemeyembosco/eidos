@@ -245,9 +245,6 @@ and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) =
                                                                             
                                           
 
-(* interpMulDivSeqExpr : env -> mul_div_seq -> env*eidosValue *)
-(*and interpMulDivSeqExpr = raise (DebugVal "I fail muldivseq!")*)
-
 (* interpSeqExpr : env -> seq_expr -> env*eidosValue *)
 and interpSeqExpr env (Seq (exp_e, expe_opt) : seq_expr ) = interpExpExpr env exp_e
 
