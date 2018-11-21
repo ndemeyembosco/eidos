@@ -240,7 +240,8 @@ and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) =
                                                 ) in
                                                     (match sehead with
                                                           Times seq  -> interp_seq_with ( * )  ( *.) seq
-                                                        | Div seq -> interp_seq_with (/) (/.) seq 
+                                                        | Div seq -> interp_seq_with (/) (/.) seq
+                                                        | Mod seq -> interp_seq_with (mod) (mod_float) seq 
                                                     )
                                                                             
                                           
