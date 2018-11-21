@@ -63,19 +63,17 @@ and unary_expr  = Post of postfix_expr
                 | PlusExpr of unary_expr
                 | ExclaimExpr of unary_expr
 
-and postfix_expr  = PE of primary_expr
-                  | FE of function_execution
-                  | FD of function_definition
-                  | AA of attribute_accessor
-                  | Ind of indexing
+and postfix_expr  = PE of primary_expr * postfix_opt option
+                  
+and postfix_opt   = FC of function_call * postfix_opt option
+                  | AA of attribute_accessor * postfix_opt option
+                  | Ind of indexing * postfix_opt option
 
-and function_execution = primary_expr
+and function_call = FuncCall of (argument_expr list)
 
-and function_definition = FuncDef of primary_expr * (argument_expr list)
+and attribute_accessor = AttAcc of string
 
-and attribute_accessor = AttAcc of primary_expr * string
-
-and indexing = Idx of primary_expr * (conditional_expr list) option
+and indexing = Idx of (conditional_expr list) option
 
 and primary_expr = Ident of string | Const of constant | E of expr
 

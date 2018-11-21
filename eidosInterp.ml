@@ -113,20 +113,24 @@ and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! just an attempt to get sth working : *)
                                  match ass with
                                  | Assign (cond, cond_exp_opt) -> let (new_env, value) = interpConditionalExpr env cond in (* value is string! *)
+                                                                        print_string ((string_of_eidos_val value)^"\n" );
                                                                         (match cond_exp_opt with
                                                                         | None       -> (match value with
                                                                               String str -> let strArr = Array.to_list str in
-                                                                                              match strArr with
-                                                                                              | []     -> raise (DebugVal "variable name should not be empty")
-                                                                                              | (x::xs) -> (Env.add x Void env, Void)
+                                                                                        match strArr with
+                                                                                         | []     -> raise (DebugVal "variable name should not be empty")
+                                                                                         | (x::xs) -> (print_string "Added with no value to env\n");
+                                                                                                      (Env.add x Void env, Void)
                                                                               | _          -> raise (DebugVal "varible should be string!"))
                                                                         | Some cond1 ->
                                                                                 let (env1, value1) = interpConditionalExpr new_env cond1 in
+                                                                                print_string ((string_of_eidos_val value1)^"\n" );
                                                                                 (match value with
                                                                                    String str -> let strArr = Array.to_list str in
                                                                                                 match strArr with
                                                                                                 | []     -> raise (DebugVal "variable name should not be empty")
-                                                                                                | (x::xs) -> (Env.add x value1 env, Void))
+                                                                                                | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^"to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                                                             (Env.add x value1 env, Void))
                                                                                   |_           -> raise (DebugVal "varible should be string!")
                                                                                 )
 
@@ -134,7 +138,9 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
 
 (* interpConditionalExpr : env -> conditional_expr -> env*eidosValue *)
 and interpConditionalExpr env (Cond (lorexp, twoconds_opt) : conditional_expr )= match twoconds_opt with
-                                        |None                    -> interpLorExpr env lorexp
+                                        |None                    -> let (new_env, value) = interpLorExpr env lorexp in
+                                                                    (*print_string ((string_of_eidos_val value)^"\n" );*)
+                                                                    (new_env,value)
                                         |Some (cond_e1, cond_e2) ->
                                                              let (new_env, value) = interpLorExpr env lorexp in
                                                              (match value with
@@ -196,7 +202,9 @@ and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
                                                              )
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
 and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
-                                                | None         -> interpMultExpr env mult_e (*throw away Plus? probably an error!*)
+                                                | None         -> let (evn, value) = interpMultExpr env mult_e in(*throw away Plus? probably an error!*)
+                                                                        (*print_string ((string_of_eidos_val value)^"\n" );*)
+                                                                        (evn,value)
                                                 | Some []       -> interpMultExpr env mult_e
                                                 | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
@@ -230,7 +238,7 @@ and interpExpExpr env (Eexpr (unary_e, unarye_opt) : exp_expr ) = interpUnaryExp
 and interpUnaryExpr env (Post (post_e) : unary_expr ) = interpPostFixExpr env post_e
 
 (* interpPostFixExpr : env -> postfix_expr -> env*eidosValue *)
-and interpPostFixExpr env (PE (prim_e) : postfix_expr ) = interpPrimaryExpr env prim_e
+and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) = interpPrimaryExpr env prim_e
 
 (* interpFuncExec : env -> function_execution -> env*eidosValue *)
 (*and interpFuncExec = raise (DebugVal "I fail interpFuncExec!")*)
@@ -252,7 +260,7 @@ and interpPrimaryExpr env (prim_e : primary_expr) = match prim_e with
 
 (* interpConstant : env -> constant -> env*eidosValue *)
 and interpConstant env c = match c with
-                      | ConstInt n -> (env, Integer (Array.of_list [n]))
+                      | ConstInt n -> print_string ("Integer value: "^string_of_int n^"\n"); (env, Integer (Array.of_list [n]))
                       | ConstFloat f -> (env, Float (Array.of_list [f]))
                       | ConstStr str -> (env, String (Array.of_list [str]))
 
@@ -260,8 +268,7 @@ and interpConstant env c = match c with
 (* interpIdentifier : env -> identifier -> env*eidosValue *)
 and interpIdentifier env (id : string) = match id with
                          | var_name -> match Env.find_opt var_name env with
-                               | None -> (env, String([|var_name|])) (* probably better to raise an exception,
-                                                     but then complicates interpretting other things such as for loop! *)
+                               | None -> print_string ("Variable name: "^var_name^"\n"); (env, String([|var_name|])) (*if the value is not found then it's either an assignment or an undefined var *)
                                | Some v -> (env, v)
 (*
 (* interpArgumentExpr : env -> argument_expr -> env*eidosValue *)
@@ -302,6 +309,8 @@ let get_prog () =
   Parse.interpreter_block Lex.lexer (Lexing.from_channel ch)
 
 let _ =
-  let prog = get_prog () in
-  interp prog
+        let prog = get_prog () in
+        (*if prog then (print_string "Parse Success") else (print_string "Parse Error")*)
+        (*print_string "Success"*)
+        interp prog
 

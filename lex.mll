@@ -21,7 +21,7 @@ let decpart    = '.'['0'-'9']*
 let digit      = ['0'-'9']+
 let number     = digit decpart? exp?
 let stringChar = ('\\'['"''\\''n''r''t']|[^ '\n''\r''\\''\"'])+
-let stringLit  =  '\"'stringChar?'\"'
+let stringLit  =  '\"'stringChar?'\"' | "\'"stringChar?"\'"
 
 rule lexer = parse
   ws+   { lexer lexbuf }

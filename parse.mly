@@ -158,29 +158,33 @@ unary_expr:
 | MINUS unary_expr { NegExpr($2) }
 
 /* postfix_expr */
-
+/*need to make this recursive for expressions such as function().attribute;*/
 postfix_expr:
-  primary_expr { PE($1) }
-| function_execution { FE($1) }
-| function_definition { FD($1) }
-| attribute_accessor { AA($1) }
-| indexing { Ind($1) }
+  primary_expr { PE($1,None) }
+| primary_expr postfix_opt { PE($1,Some $2) }
 
-function_execution:
-  primary_expr LPAREN RPAREN { $1 }
+postfix_opt:
+  function_call { FC($1,None) }
+| attribute_accessor { AA($1,None) }
+| indexing { Ind($1,None) }
+| function_call postfix_opt { FC($1, Some $2) }
+| attribute_accessor postfix_opt { AA($1, Some $2) }
+| indexing postfix_opt { Ind($1, Some $2) }
 
-function_definition:
-  primary_expr LPAREN argument_expr_list RPAREN { FuncDef($1,$3) }
+function_call:
+  LPAREN argument_expr_list RPAREN { FuncCall($2) }
 
 attribute_accessor:
-  primary_expr DOT identifier { AttAcc($1,$3) }
+  DOT identifier { AttAcc($2) }
 
 indexing:
-  primary_expr LBRACE RBRACE { Idx($1,None)}
-| primary_expr LBRACE conditional_expr_list RBRACE { Idx($1,Some $3)}
+  LBRACE RBRACE { Idx(None) }
+| LBRACE conditional_expr_list RBRACE { Idx(Some $2) }
 
 conditional_expr_list:
-  conditional_expr { [$1] }
+  COMMA { [] }
+| COMMA conditional_expr_list { $2 }
+| conditional_expr { [$1] }
 | conditional_expr COMMA { [$1] }
 | conditional_expr COMMA conditional_expr_list { $1::$3 }
 
@@ -201,8 +205,8 @@ argument_expr:
   conditional_expr { C($1) }
 | identifier EQUALS  conditional_expr { ArgSc($1,$3)}
 
-argument_expr_list:
-  argument_expr { [$1] }
+argument_expr_list:     { [] }
+| argument_expr { [$1] }
 | argument_expr COMMA argument_expr_list{ $1::$3 }
 
 /* function declarations */
