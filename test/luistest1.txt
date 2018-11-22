@@ -29,7 +29,7 @@ while(_x) {
 }
 x3 = y;
 for ( luis in 1:6 ) {
-  x = x + luis;
+  x = 1 + luis;
   if ( x >= 100 ) { break; }
 }
 y = 5.6;

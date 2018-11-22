@@ -64,13 +64,15 @@ and interpSelectStmt env (slct : select_stmt) = match slct with
 
 (* interpForStmt : env -> for_stmt -> env*eidosValue *)
 and interpForStmt env (forStmt : for_stmt) = match forStmt with
-                         |ForStmt (str, expr, stmt) ->  let rec loop e =
-                                                             let (new_env, value) = interpExpr e expr in (* probably a try catch to recover from errors! *)
+                         |ForStmt (str, expr, stmt) ->
+                         (* let rec loop e = *)
+                                                             let (new_env, value) = interpExpr env expr in (* probably a try catch to recover from errors! *)
                                                              (match value with
                                                               | Void -> (new_env, Void)
-                                                              | _    -> let (env1, _) = interpStatement (Env.add str value e) stmt in
-                                                                        loop env1) in
-                                                               loop env
+                                                              | _    -> interp_for_value env str value stmt (interpStatement))
+                                                              (* let (env1, _) = interpStatement (Env.add str value e) stmt in *)
+                                                                        (* loop env1) in
+                                                               loop env *)
 
 
 (* interpDoWhileStmt : env -> do_while_stmt -> env*eidosValue *)
@@ -127,11 +129,11 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                                 print_string ((string_of_eidos_val value1)^"\n" );
                                                                                 (match value with
                                                                                    String str -> let strArr = Array.to_list str in
-                                                                                                match strArr with
+                                                                                                (match strArr with
                                                                                                 | []     -> raise (DebugVal "variable name should not be empty")
                                                                                                 | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                                                              (Env.add x value1 env, Void))
-                                                                                  |_           -> raise (DebugVal "variable should be string!")
+                                                                                  |_           -> (new_env, value))
                                                                                 )
 
 
@@ -209,6 +211,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                 | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
                                                                                  let (env1, value1) = interpAddExpr new_env (Add (m_expr, Some aas)) in  (* type promotion stuff *)
+
                                                                                   (match (value, value1) with
                                                                                           |(Integer narray, Integer marray) -> (match (Array.to_list narray, Array.to_list marray) with
                                                                                                                                     | ([], [])          -> (env1, Integer [||])
@@ -247,7 +250,8 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                                            then (env1, Float (Array.map2 (fun t t1 -> op2 (float_of_int t1) t) narray marray))
                                                                                                                                                               else raise (DebugVal "vector length mismatch!"))
                                                                                           |(String narray, Integer marray)  -> raise Undefined
-                                                                                          |(_, _) -> raise (TyExcept "incompatible add!")) in
+                                                                                          |(v1, v2) -> print_string((string_of_eidos_val value)^ " " ^ (string_of_eidos_val value1)^ "\n");
+                                                                                                     raise (TyExcept ("incompatible add!" ^ (string_of_eidos_val v1) ^ " " ^ (string_of_eidos_val v2)))) in
                                                                   (match a with
                                                                     | Plus mul  -> interp_mult_with (+) (+.) mul
                                                                     | Minus mul -> interp_mult_with (-) (-.) mul)
@@ -369,10 +373,3 @@ let _ =
         (*if prog then (print_string "Parse Success") else (print_string "Parse Error")*)
         (*print_string "Success"*)
         interp prog
-
-let rec generateSeq n m = if n > m then
-                                  n :: generateSeq (n - 1) m
-                               else
-                               if n == m then
-                                 [m] else
-                                    if n < m then n :: generateSeq (n + 1) m else generateSeq m n

@@ -205,7 +205,7 @@ argument_expr:
   conditional_expr { C($1) }
 | identifier EQUALS  conditional_expr { ArgSc($1,$3)}
 
-argument_expr_list:     { [] }
+argument_expr_list:
 | argument_expr { [$1] }
 | argument_expr COMMA argument_expr_list{ $1::$3 }
 

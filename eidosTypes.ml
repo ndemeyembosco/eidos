@@ -125,6 +125,25 @@ and string_of_numeric (num : numeric) : string  = match num with
                                          Int n -> string_of_int n
                                          |Flt f -> string_of_float f
 
+let rec generateSeq n m = if n > m then
+                                 n :: generateSeq (n - 1) m
+                              else
+                              if n == m then
+                                [m] else
+                                   if n < m then n :: generateSeq (n + 1) m else generateSeq m n
+
+let rec generateSeq_f n m = if n > m then
+                                 n :: generateSeq_f (n -. 1.0) m
+                              else
+                              if n == m then
+                                [m] else
+                                   if n < m then n :: generateSeq_f (n +. 1.0) m else generateSeq_f m n
+
+
+let rec make_seq_of_int (n : int) (m : int) =  generateSeq n m
+
+let rec make_seq_of_float (n : float) (m : float) = generateSeq_f n m
+
 let make_seq_from_num_array n m = match (n, m) with
                      (Integer n_array, Integer m_array) -> (match (n_array, m_array) with
                                          ([|n1|], [|m1|]) -> Integer (Array.of_list (make_seq_of_int n1 m1))
@@ -133,3 +152,16 @@ let make_seq_from_num_array n m = match (n, m) with
                                          ([|n1|], [|m1|]) -> Float (Array.of_list (make_seq_of_float n1 m1))
                                          | _               -> raise (TyExcept "vectors must be singletons!"))
                      | _                                -> raise (TyExcept "sequence function only works with numeric types!")
+
+let interp_for_value (env : env) (s : string) (varlist : eidosValue) (st : 'a) f
+                     = match varlist with
+                     | Integer int_array ->
+                                      (* print_string ((string_of_eidos_val varlist) ^ "\n"); *)
+                                      (* Array.fold_right (fun v (new_env, v1) -> print_string ("added for loop variable " ^ s ^ " with value " ^ (string_of_eidos_val (Integer [|v|])) ^ "\n");
+                                      f (Env.add s (Integer [|v|]) new_env) st) int_array (env, Void) *)
+                                      Array.fold_left (fun (new_env, v1) v -> print_string ("added for loop variable " ^ s ^ " with value " ^ (string_of_eidos_val (Integer [|v|])) ^ "\n");
+                                      f (Env.add s (Integer [|v|]) new_env) st) (env, Void) int_array
+                     | Float float_array -> Array.fold_right (fun v (new_env, value) -> f (Env.add s (Float [|v|]) new_env) st) float_array (env, Void)
+                     | Logical l_array   -> Array.fold_right (fun v (new_env, value) -> f (Env.add s (Logical [|v|]) new_env) st) l_array (env, Void)
+                     | String s_array    ->  Array.fold_right (fun v (new_env, value) -> f (Env.add s (String [|v|]) new_env) st) s_array (env, Void)
+                     | _                 -> raise (TyExcept "function undefined for this array type!")
