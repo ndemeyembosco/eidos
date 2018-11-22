@@ -124,3 +124,12 @@ and string_of_plus_op_val (plop : plus_op_value) : string = match plop with
 and string_of_numeric (num : numeric) : string  = match num with
                                          Int n -> string_of_int n
                                          |Flt f -> string_of_float f
+
+let make_seq_from_num_array n m = match (n, m) with
+                     (Integer n_array, Integer m_array) -> (match (n_array, m_array) with
+                                         ([|n1|], [|m1|]) -> Integer (Array.of_list (make_seq_of_int n1 m1))
+                                         | _               -> raise (TyExcept "vectors must be singletons!"))
+                     | (Float n_array, Float m_array) -> (match (n_array, m_array) with
+                                         ([|n1|], [|m1|]) -> Float (Array.of_list (make_seq_of_float n1 m1))
+                                         | _               -> raise (TyExcept "vectors must be singletons!"))
+                     | _                                -> raise (TyExcept "sequence function only works with numeric types!")
