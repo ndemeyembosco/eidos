@@ -131,7 +131,7 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                                                 | []     -> raise (DebugVal "variable name should not be empty")
                                                                                                 | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^"to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                                                              (Env.add x value1 env, Void))
-                                                                                  |_           -> raise (DebugVal "varible should be string!")
+                                                                                  |_           -> raise (DebugVal "variable should be string!")
                                                                                 )
 
 
@@ -210,10 +210,43 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
                                                                                  let (env1, value1) = interpAddExpr new_env (Add (m_expr, Some aas)) in  (* type promotion stuff *)
                                                                                   (match (value, value1) with
-                                                                                          |(Integer narray, Integer marray) -> (env1, Integer (Array.map2 (op1) narray marray))
-                                                                                          |(Float narray, Float marray)     -> (env1, Float (Array.map2 (op2) narray marray))
-                                                                                          |(Integer narray, Float marray)   -> (env1, Float (Array.map2 (fun x y -> op2 (float_of_int x) y ) narray marray))
-                                                                                          |(Float narray, Integer marray)   -> (env1, Float (Array.map2 (fun x y -> op2 x (float_of_int y) ) narray marray))
+                                                                                          |(Integer narray, Integer marray) -> (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                                                    | ([], [])          -> (env1, Integer [||])
+                                                                                                                                    | ([x], [])         -> (env1, Integer [|x|])
+                                                                                                                                    | ([], [x])         -> (env1, Integer [|x|])
+                                                                                                                                    | (x::xs as l, [n]) -> (env1, Integer (Array.map (op1 n) narray))
+                                                                                                                                    | ([n], x::xs)      -> (env1, Integer (Array.map (op1 n) marray))
+                                                                                                                                    | (l, l1)           -> if Array.length narray == Array.length marray
+                                                                                                                                                           then (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                                                                                              else raise (DebugVal "vector length mismatch!"))
+                                                                                          |(Float narray, Float marray)     -> (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                                                    | ([], [])          -> (env1, Float [||])
+                                                                                                                                    | ([x], [])         -> (env1, Float [|x|])
+                                                                                                                                    | ([], [x])         -> (env1, Float [|x|])
+                                                                                                                                    | (x::xs as l, [n]) -> (env1, Float (Array.map (op2 n) narray))
+                                                                                                                                    | ([n], x::xs)      -> (env1, Float (Array.map (op2 n) marray))
+                                                                                                                                    | (l, l1)           -> if Array.length narray == Array.length marray
+                                                                                                                                                           then (env1, Float (Array.map2 (op2) narray marray))
+                                                                                                                                                              else raise (DebugVal "vector length mismatch!"))
+                                                                                          |(Integer narray, Float marray)   -> (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                                                    | ([], [])          -> (env1, Float [||])
+                                                                                                                                    | ([x], [])         -> (env1, Float [|float_of_int x|])
+                                                                                                                                    | ([], [x])         -> (env1, Float [|x|])
+                                                                                                                                    | (x::xs as l, [n]) -> (env1, Float (Array.map (fun t -> op2 (float_of_int t) n) narray))
+                                                                                                                                    | ([n], x::xs)      -> (env1, Float (Array.map (fun t -> op2 (float_of_int n) t) marray))
+                                                                                                                                    | (l, l1)           -> if Array.length narray == Array.length marray
+                                                                                                                                                           then (env1, Float (Array.map2 (fun t t1 -> op2 (float_of_int t) t1) narray marray))
+                                                                                                                                                              else raise (DebugVal "vector length mismatch!"))
+                                                                                          |(Float narray, Integer marray)   -> (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                                                    | ([], [])          -> (env1, Float [||])
+                                                                                                                                    | ([x], [])         -> (env1, Float [|x|])
+                                                                                                                                    | ([], [x])         -> (env1, Float [|float_of_int x|])
+                                                                                                                                    | (x::xs as l, [n]) -> (env1, Float (Array.map (fun t -> op2 (float_of_int n) t) narray))
+                                                                                                                                    | ([n], x::xs)      -> (env1, Float (Array.map (fun t -> op2 (float_of_int t) n) marray))
+                                                                                                                                    | (l, l1)           -> if Array.length narray == Array.length marray
+                                                                                                                                                           then (env1, Float (Array.map2 (fun t t1 -> op2 (float_of_int t1) t) narray marray))
+                                                                                                                                                              else raise (DebugVal "vector length mismatch!"))
+                                                                                          |(String narray, Integer marray)  -> raise Undefined
                                                                                           |(_, _) -> raise (TyExcept "incompatible add!")) in
                                                                   (match a with
                                                                     | Plus mul  -> interp_mult_with (+) (+.) mul
@@ -314,3 +347,7 @@ let _ =
         (*print_string "Success"*)
         interp prog
 
+let generateSeq n m = if n > m then
+                         n :: generateSeq (n - 1) m else
+                         if n == m then [m] else if
+                         n < m then n :: generateSeq (n + 1) m
