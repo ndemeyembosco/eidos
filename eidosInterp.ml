@@ -280,7 +280,12 @@ and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) =
 
 
 (* interpSeqExpr : env -> seq_expr -> env*eidosValue *)
-and interpSeqExpr env (Seq (exp_e, expe_opt) : seq_expr ) = interpExpExpr env exp_e
+and interpSeqExpr env (Seq (exp, exp_opt) : seq_expr) = match exp_opt with
+                                                | None      -> interpExpExpr env exp
+                                                | Some exp2 ->
+                                                           let (new_env, value) = interpExpExpr env exp in
+                                                             let (env1, value1) = interpExpExpr env exp2 in
+                                                             (env1, make_seq_from_num_array value value1)
 
 (* interpExpExpr : env -> exp_expr -> env*eidosValue *)
 and interpExpExpr env (Eexpr (unary_e, unarye_opt) : exp_expr ) = interpUnaryExpr env unary_e
