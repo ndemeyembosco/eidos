@@ -5,8 +5,17 @@ c;
 6:1;
 x = 0;
 y = 1;
+z = x - y;
 for ( luis in 1:6 ) {
   x = x + luis;
   y = y * luis;
   if ( x >= 100 ) { break; }
+}
+x = 0;
+increment = 10;
+while(x < 1000) {
+  x = x + increment;
+  if (x >= 100) {
+    increment = 100;
+  }
 }
