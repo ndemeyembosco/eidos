@@ -58,6 +58,11 @@ let apply_int_func (f : int -> int -> int) (e : eidosValue) (e1 : eidosValue)
                      | (Integer narray, Integer marray) -> Integer (Array.map2 f narray marray)
                      | _ -> raise (TyExcept "expected integers!")
 
+let apply_int_bool_func (f : int -> int -> bool) (e : eidosValue) (e1 : eidosValue)
+                = match (e, e1) with
+                     | (Integer narray, Integer marray) -> Logical (Array.map2 f narray marray)
+                     | _ -> raise (TyExcept "expected integers!")
+
 let apply_bool_func (f : bool -> bool -> bool) (e : eidosValue) (e1 : eidosValue)
                 = match (e, e1) with
                      | (Logical b1array, Logical b2array) -> Logical (Array.map2 f b1array b2array)
@@ -84,7 +89,7 @@ let rec string_of_eidos_val (evalue : eidosValue) : string = match evalue with
                         | Null _ -> "null"
                         | Logical l      -> (match Array.to_list l with
                                              | [] -> ""
-                                             | (x::xs) -> if x then "true" ^ string_of_eidos_val (Logical (Array.of_list xs))
+                                             | (x::xs) -> if x == true then "true" ^ string_of_eidos_val (Logical (Array.of_list xs))
                                                                else "false" ^ string_of_eidos_val (Logical (Array.of_list xs)))
                         | Integer l  -> (match Array.to_list l with
                                             | [] -> ""

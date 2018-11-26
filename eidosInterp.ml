@@ -50,13 +50,13 @@ and interpSelectStmt env (slct : select_stmt) = match slct with
                                | If (e, cmpd, v) -> match v with
                                                 | None -> let (new_env, cond) = interpExpr env e in
                                                                 (match cond with
-                                                                       | (Logical boolean) -> if boolean == Array.of_list [true] then
+                                                                       | (Logical boolean) -> if boolean = Array.of_list [true] then
                                                                                    interpCompoundStmt new_env cmpd else
                                                                                    (new_env, Void)
                                                                        | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
                                                 |(Some cmpd1) -> let (new_env, cond) = interpExpr env e in
                                                                       (match cond with
-                                                                      | (Logical boolean) -> if boolean == Array.of_list [true] then
+                                                                      | (Logical boolean) -> if boolean = Array.of_list [true] then
                                                                                          interpCompoundStmt new_env cmpd else
                                                                                          interpCompoundStmt new_env cmpd1
                                                                       | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
@@ -70,10 +70,6 @@ and interpForStmt env (forStmt : for_stmt) = match forStmt with
                                                              (match value with
                                                               | Void -> (new_env, Void)
                                                               | _    -> interp_for_value env str value stmt (interpStatement))
-                                                              (* let (env1, _) = interpStatement (Env.add str value e) stmt in *)
-                                                                        (* loop env1) in
-                                                               loop env *)
-
 
 (* interpDoWhileStmt : env -> do_while_stmt -> env*eidosValue *)
 and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
@@ -81,7 +77,7 @@ and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
                                                let (new_env, value) = interpStatement env stmt in
                                                 let (env1, cond) = interpExpr new_env expr in
                                                   (match cond with
-                                                    |Logical boolean -> if boolean == Array.of_list [false] then
+                                                    |Logical boolean -> if boolean = Array.of_list [false] then
                                                                             (new_env, value) else
                                                                          interpWhileStmt new_env (WhileStmt (expr, stmt))
                                                     | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!"))
@@ -89,7 +85,7 @@ and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
 
 
 (* interpWhileStmt : env -> while_stmt -> env*eidosValue *) (* Implement loop unrolling! *)
-and interpWhileStmt env (whileStmt : while_stmt) = match whileStmt with
+(*and interpWhileStmt env (whileStmt : while_stmt) = match whileStmt with
                                           | WhileStmt (expr, stmt) ->
                                                      interpSelectStmt env
                                                                   (If (expr, CmpdStmt [stmt]
@@ -99,7 +95,15 @@ and interpWhileStmt env (whileStmt : while_stmt) = match whileStmt with
                                                                       (WhileStmt (expr,stmt))
                                                                       ]
                                                                     )))
-
+*)
+and interpWhileStmt env (WhileStmt (expr, stmt) : while_stmt) = let (new_env, value) = interpExpr env expr in
+                                                                match value with
+                                                                  Logical boolean -> if boolean = Array.of_list [false] then
+                                                                                        (new_env, Void) 
+                                                                                     else
+                                                                                        let (env1, value1)  = interpStatement new_env stmt in
+                                                                                        interpWhileStmt env1 (WhileStmt (expr,stmt))
+                                                                | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!")
 
 (* interpJumpStmt : env -> jump_stmt -> env*eidosValue *)
 and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* this might be very wrong! *)
@@ -112,31 +116,6 @@ and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* th
 and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
 (* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
-(*and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! just an attempt to get sth working : *)
-                                 match ass with
-                                 | Assign (cond, cond_exp_opt) -> let (new_env, value) = interpConditionalExpr env cond in (* value is string! *)
-                                                                        print_string ((string_of_eidos_val value)^"\n" );
-                                                                        (match cond_exp_opt with
-                                                                        | None       -> (match value with
-                                                                              String str -> let strArr = Array.to_list str in
-                                                                                        (match strArr with
-                                                                                         | []     -> raise (DebugVal "variable name should not be empty")
-                                                                                         | (x::xs) -> (print_string "Added with no value to env\n");
-                                                                                                      (Env.add x Void env, Void))
-                                                                              | _          -> (new_env,value))
-                                                                        | Some cond1 ->
-                                                                                let (env1, value1) = interpConditionalExpr new_env cond1 in
-                                                                                print_string ("left hand side: "^(string_of_eidos_val value)^"\n" );
-                                                                                print_string ("right hand side: "^(string_of_eidos_val value1)^"\n" );
-                                                                                (match value with
-                                                                                   String str -> let strArr = Array.to_list str in
-                                                                                                (match strArr with
-                                                                                                | []     -> raise (DebugVal "variable name should not be empty")
-                                                                                                | (x::xs) ->  print_string ("Added variable "^(string_of_eidos_val value)^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
-                                                                                                             (Env.add x value1 env, Void))
-                                                                                  |_           -> (new_env, value))
-                                                                                )
-*)
 and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) = 
                                  match cond_exp_opt with
                                         None -> let (new_env, value) =interpConditionalExpr env cond in
@@ -149,7 +128,7 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                String str -> let strArr = Array.to_list str in
                                                                       (match strArr with
                                                                              | []      -> raise (DebugVal "variable name should not be empty")
-                                                                             | (x::xs) -> print_string ("Added variable "^(string_of_eidos_val value)^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                             | (x::xs) -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                              (Env.add x value1 env, Void)
                                                                       )
                                                                |_           -> (new_env, value)
@@ -164,7 +143,7 @@ and interpConditionalExpr env (Cond (lorexp, twoconds_opt) : conditional_expr )=
                                         |Some (cond_e1, cond_e2) ->
                                                              let (new_env, value) = interpLorExpr env lorexp in
                                                              (match value with
-                                                             |Logical boolean -> if boolean == Array.of_list [true] then
+                                                             |Logical boolean -> if boolean = Array.of_list [true] then
                                                                                      interpConditionalExpr new_env cond_e1 else
                                                                                      interpConditionalExpr new_env cond_e2
 
@@ -214,12 +193,17 @@ and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
                                               | Some (c::cs) -> let interp_add_with op a_expr =
                                                                               let (new_env, value) = interpAddExpr env add_e in
                                                                               let (env1, value1)   = interpRelExpr new_env (Rel (a_expr, Some cs)) in
-                                                                              (env1, Logical (Array.of_list [op value value1])) in (match c with
-                                                             | Less addexpr  -> interp_add_with (<) addexpr
-                                                             | Leq addexpr   -> interp_add_with (<=) addexpr
-                                                             | Great addexpr -> interp_add_with (>) addexpr
-                                                             | Geq addexpr   -> interp_add_with (>=) addexpr
-                                                             )
+                                                                              (match (value, value1) with 
+                                                                                          (Integer narray, Integer marray) -> (env1, Logical (Array.map2 (op) narray marray))
+                                                                                        (*| (Float na, Float ma)     -> (env1, Logical (Array.map2 (op) na ma))*)
+                                                                                        | _ -> raise (DebugVal "something is up")
+                                                                              ) in                                                                      
+                                                                              (match c with
+                                                                                       | Less addexpr  -> interp_add_with (<) addexpr
+                                                                                       | Leq addexpr   -> interp_add_with (<=) addexpr
+                                                                                       | Great addexpr -> interp_add_with (>) addexpr
+                                                                                       | Geq addexpr   -> interp_add_with (>=) addexpr
+                                                                              )
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
 and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
                                                 | None         -> let (env, value) = interpMultExpr env mult_e in(*throw away Plus? probably an error!*)
