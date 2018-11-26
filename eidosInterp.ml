@@ -112,7 +112,7 @@ and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* th
 and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
 (* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
-and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! just an attempt to get sth working : *)
+(*and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! just an attempt to get sth working : *)
                                  match ass with
                                  | Assign (cond, cond_exp_opt) -> let (new_env, value) = interpConditionalExpr env cond in (* value is string! *)
                                                                         print_string ((string_of_eidos_val value)^"\n" );
@@ -126,7 +126,8 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                               | _          -> (new_env,value))
                                                                         | Some cond1 ->
                                                                                 let (env1, value1) = interpConditionalExpr new_env cond1 in
-                                                                                print_string ((string_of_eidos_val value1)^"\n" );
+                                                                                print_string ("left hand side: "^(string_of_eidos_val value)^"\n" );
+                                                                                print_string ("right hand side: "^(string_of_eidos_val value1)^"\n" );
                                                                                 (match value with
                                                                                    String str -> let strArr = Array.to_list str in
                                                                                                 (match strArr with
@@ -135,9 +136,26 @@ and interpAssignExpr env (ass : assign_expr) = (* This implementation is wrong! 
                                                                                                              (Env.add x value1 env, Void))
                                                                                   |_           -> (new_env, value))
                                                                                 )
-
-
-
+*)
+and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) = 
+                                 match cond_exp_opt with
+                                        None -> let (new_env, value) =interpConditionalExpr env cond in
+                                                (new_env,value)
+                                       |Some cond1 -> let (new_env, value) =interpConditionalExpr Env.empty cond in
+                                                        let (env1, value1) = interpConditionalExpr env cond1 in
+                                                        (*print_string ("left hand side: "^(string_of_eidos_val value)^"\n" );
+                                                        print_string ("right hand side: "^(string_of_eidos_val value1)^"\n" );*)
+                                                        (match value with
+                                                               String str -> let strArr = Array.to_list str in
+                                                                      (match strArr with
+                                                                             | []      -> raise (DebugVal "variable name should not be empty")
+                                                                             | (x::xs) -> print_string ("Added variable "^(string_of_eidos_val value)^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                             (Env.add x value1 env, Void)
+                                                                      )
+                                                               |_           -> (new_env, value)
+                                                        )
+                                                           
+                                                                                                                              
 (* interpConditionalExpr : env -> conditional_expr -> env*eidosValue *)
 and interpConditionalExpr env (Cond (lorexp, twoconds_opt) : conditional_expr )= match twoconds_opt with
                                         |None                    -> let (new_env, value) = interpLorExpr env lorexp in
@@ -320,7 +338,8 @@ and interpPrimaryExpr env (prim_e : primary_expr) = match prim_e with
 
 (* interpConstant : env -> constant -> env*eidosValue *)
 and interpConstant env c = match c with
-                      | ConstInt n -> print_string ("Integer value: "^string_of_int n^"\n"); (env, Integer (Array.of_list [n]))
+                      | ConstInt n -> (*print_string ("Integer value: "^string_of_int n^"\n");*)
+                                      (env, Integer (Array.of_list [n]))
                       | ConstFloat f -> (env, Float (Array.of_list [f]))
                       | ConstStr str -> (env, String (Array.of_list [str]))
 
@@ -328,7 +347,8 @@ and interpConstant env c = match c with
 (* interpIdentifier : env -> identifier -> env*eidosValue *)
 and interpIdentifier env (id : string) = match id with
                          | var_name -> match Env.find_opt var_name env with
-                               | None -> print_string ("Variable name: "^var_name^"\n"); (env, String([|var_name|])) (*if the value is not found then it's either an assignment or an undefined var *)
+                               | None -> (*print_string ("Variable name: "^var_name^"\n");*)
+                                         (env, String([|var_name|])) (*if the value is not found then it's either an assignment or an undefined var *)
                                | Some v -> (env, v)
 (*
 (* interpArgumentExpr : env -> argument_expr -> env*eidosValue *)
