@@ -96,7 +96,7 @@ let rec string_of_eidos_val (evalue : eidosValue) : string = match evalue with
                                                                else "false" ^ string_of_eidos_val (Logical (Array.of_list xs)))
                         | Integer l  -> (match Array.to_list l with
                                             | [] -> ""
-                                            | (x::xs) -> string_of_int x ^ (string_of_eidos_val (Integer (Array.of_list xs))))
+                                            | (x::xs) -> string_of_int x ^" "^(string_of_eidos_val (Integer (Array.of_list xs))))
                         | Float l    -> (match Array.to_list l with
                                             | [] -> ""
                                             | (x::xs) -> string_of_float x ^ (string_of_eidos_val (Float (Array.of_list xs))))
@@ -123,15 +123,10 @@ and string_of_plus_op_val (plop : plus_op_value) : string = match plop with
                                                     | P l -> string_of_eidos_val (VPlus l)
                                                     | T l -> string_of_eidos_val (VTimes l)
 
-
-
-
-
-
-
 and string_of_numeric (num : numeric) : string  = match num with
                                          Int n -> string_of_int n
                                          |Flt f -> string_of_float f
+
 
 let rec generateSeq n m = if n > m then
                                  n :: generateSeq (n - 1) m
@@ -140,17 +135,25 @@ let rec generateSeq n m = if n > m then
                                 [m] else
                                    if n < m then n :: generateSeq (n + 1) m else generateSeq m n
 
+(*this function shouldn't test for equality ex. 3.8:5.6*)                                   
 let rec generateSeq_f n m = if n > m then
                                  n :: generateSeq_f (n -. 1.0) m
                               else
-                              if n == m then
+                              if n = m then
                                 [m] else
-                                   if n < m then n :: generateSeq_f (n +. 1.0) m else generateSeq_f m n
+                                   if n < m then n :: (generateSeq_f (n +. 1.0) m) else generateSeq_f m n
 
-
+(*let rec generateSeq_f n m = (print_string ((string_of_float n)^" "^(string_of_float m)));if n = m then
+                                [m]
+                            else
+                                    if n < m then
+                                            n::(generateSeq_f (n +. 1.0) m)
+                                    else
+                                            generateSeq_f n m
+*)
 let rec make_seq_of_int (n : int) (m : int) =  generateSeq n m
 
-let rec make_seq_of_float (n : float) (m : float) = generateSeq_f n m
+let rec make_seq_of_float (n : float) (m : float) = (generateSeq_f n m)
 
 let make_seq_from_num_array n m = match (n, m) with
                      (Integer n_array, Integer m_array) -> (match (n_array, m_array) with

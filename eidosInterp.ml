@@ -292,19 +292,48 @@ and interpUnaryExpr env (Post (post_e) : unary_expr ) = interpPostFixExpr env po
 and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) = 
         match postfix_opt with
               None -> interpPrimaryExpr env prim_e
-            | Some postfix -> 
+            | Some postfix -> let (new_env, value) = 
+                interpPrimaryExpr env prim_e in
                 (match postfix with
-                        Ind (lst, None) -> 
-                                (match lst with
-                                        Idx(None)      -> raise (DebugVal "no expression inside indexing")
-                                       | Idx(Some l) ->  
-                                            (match l with
-                                                []   -> (env,Void)
-                                              | [x]  -> raise (DebugVal "unimplemented")
-                                              | (x::xs) -> raise (DebugVal "unimplemented")
-                                            )
+                        Ind (lst, None) ->  (* single indexing vectors and matrices*)
+                                let (env1, value1) = interpIndexing new_env lst in
+                                (match (value,value1) with
+                                        (Integer narray, Integer indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
+                                                                                    | ([], [])          -> (env1, Integer [||])
+                                                                                    | ([x], [])         -> (env1, Integer [|x|])
+                                                                                    | ([], [x])         -> (env1, Integer [||])
+                                                                                    | (x::xs as l, [n]) -> (env1, Integer [|(List.nth l n)|])
+                                                                                    | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
+                                                                                    | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
+                                                                                                           then (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                                           else raise (DebugVal "vector length mismatch!"))*)
+                                                                              )
+                                      | (Float narray, Integer indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
+                                                                                    | ([], [])          -> (env1, Float [||])
+                                                                                    | ([x], [])         -> (env1, Float [|x|])
+                                                                                    | ([], [x])         -> (env1, Float [||])
+                                                                                    | (x::xs as l, [n]) -> (env1, Float [|(List.nth l n)|])
+                                                                                    | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
+                                                                                    | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
+                                                                                                           then (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                                           else raise (DebugVal "vector length mismatch!"))*)
+                                                                              )
+                                        
+                                      | (String narray, Integer indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
+                                                                                    | ([], [])          -> (env1, String [||])
+                                                                                    | ([x], [])         -> (env1, String [|x|])
+                                                                                    | ([], [x])         -> (env1, String [||])
+                                                                                    | (x::xs as l, [n]) -> (env1, String [|(List.nth l n)|])
+                                                                                    | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
+                                                                                    | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
+                                                                                                           then (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                                           else raise (DebugVal "vector length mismatch!"))*)
+                                                                              )
+                                                (*raise (DebugVal "integer arrays"*)
+                                      | (_,_) -> raise (DebugVal "not integer arrays")
                                 )
-                       | _ -> raise (DebugVal "Other unaries not implemented")
+                                (*raise (DebugVal "single index")*)
+                       | _ -> raise (DebugVal "Other postfix not implemented")
                 )
                  
 
@@ -318,8 +347,16 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
 (*and interpAttributeAccessor = raise (DebugVal "I fail interpAA!")*)
 
 (* interpIndexing : env -> indexing -> env*eidosValue *)
-(*and interpIndexing = raise (DebugVal "I fail interpIndexing!")*)
-
+and interpIndexing env ((Idx cond_expr_list) : indexing) = 
+        match cond_expr_list with
+              None      -> raise (DebugVal "no expression inside indexing")
+            | Some l ->
+                   (match l with
+                           []   -> (env,Void)
+                         | [x]  -> interpConditionalExpr env x
+                         | (x::xs) -> raise (DebugVal "Several indexes")
+                   )
+                                
  (* interpPrimaryExpr : env -> primary_expr -> env*eidosValue *)
 and interpPrimaryExpr env (prim_e : primary_expr) = match prim_e with
                                                         Const c -> interpConstant env c
