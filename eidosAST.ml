@@ -15,7 +15,7 @@ and compound_stmt = CmpdStmt of (statement list)
 
 and expr_stmt = Estmt of (assign_expr option)
 
-and select_stmt = If of expr * compound_stmt * (compound_stmt option)
+and select_stmt = If of expr * statement * (statement option)
 
 and for_stmt = ForStmt of string * expr * statement
 

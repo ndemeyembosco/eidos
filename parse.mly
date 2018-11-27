@@ -54,8 +54,8 @@ expr_statement:
 | assignment_expr SEMI { Estmt(Some $1) }
 
 selection_statement:
-  IF LPAREN expr RPAREN compound_statement { If($3,$5,None) }
-| IF LPAREN expr RPAREN compound_statement ELSE compound_statement { If($3,$5,Some $7) }
+  IF LPAREN expr RPAREN statement { If($3,$5,None) }
+| IF LPAREN expr RPAREN statement ELSE statement { If($3,$5,Some $7) }
 
 for_statement:
   FOR LPAREN identifier IN expr RPAREN statement { ForStmt($3,$5,$7) }

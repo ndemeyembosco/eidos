@@ -51,14 +51,14 @@ and interpSelectStmt env (slct : select_stmt) = match slct with
                                                 | None -> let (new_env, cond) = interpExpr env e in
                                                                 (match cond with
                                                                        | (Logical boolean) -> if boolean = Array.of_list [true] then
-                                                                                   interpCompoundStmt new_env cmpd else
+                                                                                   interpStatement new_env cmpd else
                                                                                    (new_env, Void)
                                                                        | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
                                                 |(Some cmpd1) -> let (new_env, cond) = interpExpr env e in
                                                                       (match cond with
                                                                       | (Logical boolean) -> if boolean = Array.of_list [true] then
-                                                                                         interpCompoundStmt new_env cmpd else
-                                                                                         interpCompoundStmt new_env cmpd1
+                                                                                         interpStatement new_env cmpd else
+                                                                                         interpStatement new_env cmpd1
                                                                       | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
 
 
@@ -300,7 +300,24 @@ and interpExpExpr env (Eexpr (unary_e, unarye_opt) : exp_expr ) = interpUnaryExp
 and interpUnaryExpr env (Post (post_e) : unary_expr ) = interpPostFixExpr env post_e
 
 (* interpPostFixExpr : env -> postfix_expr -> env*eidosValue *)
-and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) = interpPrimaryExpr env prim_e
+and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) = 
+        match postfix_opt with
+              None -> interpPrimaryExpr env prim_e
+            | Some postfix -> 
+                (match postfix with
+                        Ind (lst, None) -> 
+                                (match lst with
+                                        Idx(None)      -> raise (DebugVal "no expression inside indexing")
+                                       | Idx(Some l) ->  
+                                            (match l with
+                                                []   -> (env,Void)
+                                              | [x]  -> raise (DebugVal "unimplemented")
+                                              | (x::xs) -> raise (DebugVal "unimplemented")
+                                            )
+                                )
+                       | _ -> raise (DebugVal "Other unaries not implemented")
+                )
+                 
 
 (* interpFuncExec : env -> function_execution -> env*eidosValue *)
 (*and interpFuncExec = raise (DebugVal "I fail interpFuncExec!")*)
