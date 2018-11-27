@@ -51,7 +51,10 @@ module Env = Map.Make(String)
 
 type env   = eidosValue Env.t
 let empty_env : env = Env.empty
-
+let addT_env : env = Env.add "T" (Logical [|true|]) empty_env
+let addF_env : env = Env.add "F" (Logical [|false|]) addT_env
+let addPi_env : env = Env.add "PI" (Float [|3.14159|]) addF_env
+let initial_env : env = Env.add "E" (Float [|2.71828|]) addPi_env
 
 let apply_int_func (f : int -> int -> int) (e : eidosValue) (e1 : eidosValue)
                 = match (e, e1) with

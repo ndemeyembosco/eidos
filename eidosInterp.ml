@@ -377,7 +377,7 @@ and interpParamList = raise Undefined
 and interpParamSpec = raise Undefined
 *)
 (* function to start interpreting *)
-let interp = interpBlock empty_env
+let interp = interpBlock initial_env
 
 (******************************************)
 let get_prog () =
