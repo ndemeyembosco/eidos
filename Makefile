@@ -15,7 +15,7 @@ all: clean
 	$(COMPILER) -c lex.ml
 	$(COMPILER) -c eidosTypes.ml
 	$(COMPILER) -c eidosInterp.ml
-	$(COMPILER) -o parse eidosAST.cmo eidosTypes.cmo parse.cmo lex.cmo eidosInterp.ml # order matters
+	$(COMPILER) -o interp eidosAST.cmo eidosTypes.cmo parse.cmo lex.cmo eidosInterp.ml # order matters
 
 clean:
 	$(RM) *.cmo *.cmi parse.ml parse.mli lex.ml parse *.output parse 
