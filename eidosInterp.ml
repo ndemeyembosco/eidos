@@ -61,7 +61,6 @@ and interpSelectStmt env (slct : select_stmt) = match slct with
                                                                                          interpStatement new_env cmpd1
                                                                       | _ -> raise (IfExpr "expr inside if statement must be a boolean!"))
 
-
 (* interpForStmt : env -> for_stmt -> env*eidosValue *)
 and interpForStmt env (forStmt : for_stmt) = match forStmt with
                          |ForStmt (str, expr, stmt) ->
@@ -78,24 +77,14 @@ and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
                                                 let (env1, cond) = interpExpr new_env expr in
                                                   (match cond with
                                                     |Logical boolean -> if boolean = Array.of_list [false] then
-                                                                            (new_env, value) else
-                                                                         interpWhileStmt new_env (WhileStmt (expr, stmt))
+                                                                                (new_env, value) 
+                                                                        else
+                                                                                interpWhileStmt new_env (WhileStmt (expr, stmt))
                                                     | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!"))
 
 
 
 (* interpWhileStmt : env -> while_stmt -> env*eidosValue *) (* Implement loop unrolling! *)
-(*and interpWhileStmt env (whileStmt : while_stmt) = match whileStmt with
-                                          | WhileStmt (expr, stmt) ->
-                                                     interpSelectStmt env
-                                                                  (If (expr, CmpdStmt [stmt]
-                                                                    , Some
-                                                                    (CmpdStmt
-                                                                      [While
-                                                                      (WhileStmt (expr,stmt))
-                                                                      ]
-                                                                    )))
-*)
 and interpWhileStmt env (WhileStmt (expr, stmt) : while_stmt) = let (new_env, value) = interpExpr env expr in
                                                                 match value with
                                                                   Logical boolean -> if boolean = Array.of_list [false] then
