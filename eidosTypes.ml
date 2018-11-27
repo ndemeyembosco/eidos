@@ -96,7 +96,7 @@ let rec string_of_eidos_val (evalue : eidosValue) : string = match evalue with
                                                                else "false" ^ string_of_eidos_val (Logical (Array.of_list xs)))
                         | Integer l  -> (match Array.to_list l with
                                             | [] -> ""
-                                            | (x::xs) -> string_of_int x ^" "^(string_of_eidos_val (Integer (Array.of_list xs))))
+                                            | (x::xs) -> string_of_int x ^ (string_of_eidos_val (Integer (Array.of_list xs))))
                         | Float l    -> (match Array.to_list l with
                                             | [] -> ""
                                             | (x::xs) -> string_of_float x ^ (string_of_eidos_val (Float (Array.of_list xs))))
