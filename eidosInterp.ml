@@ -104,13 +104,14 @@ and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* th
 (* interpExpr : env -> expr -> env*eidosValue *)
 and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
-(* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
+(* interpAssignExpr : env -> assign_expr -> env*eidosValue *) (*
 and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) = 
                                  match cond_exp_opt with
                                         None -> let (new_env, value) =interpConditionalExpr env cond in
                                                 (new_env,value)
-                                       |Some cond1 -> let (new_env, value) =interpConditionalExpr Env.empty cond in
-                                                        let (env1, value1) = interpConditionalExpr env cond1 in
+                                       |Some cond1 -> let (new_env, value) = interpConditionalExpr Env.empty cond in    (*value has the name of the variable, or an array with name and index ex x[2] see postfix indexing for details*)
+                                                        let (env2, value2) = interpConditionalExpr env cond in          (*value2 has the evaluation of the variable including indexing x[2]*)
+                                                        let (env1, value1) = interpConditionalExpr env cond1 in         (*value1 has the evaluation of the left hand side*)
                                                         (*print_string ("left hand side: "^(string_of_eidos_val value)^"\n" );
                                                         print_string ("right hand side: "^(string_of_eidos_val value1)^"\n" );*)
                                                         (match value with
@@ -119,6 +120,31 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                              | []      -> raise (DebugVal "variable name should not be empty")
                                                                              | (x::xs) -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                              (Env.add x value1 env, Void)
+                                                                      )
+                                                               |_           -> (new_env, value)
+                                                        ) *)
+
+and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
+                                 match cond_exp_opt with
+                                        None -> let (new_env, value) =interpConditionalExpr env cond in
+                                                print_string ((string_of_eidos_val value)^"\n");
+                                                (new_env,value)
+                                       |Some cond1 -> let (new_env, value) = interpConditionalExpr Env.empty cond in    (*value has the name of the variable, or an array with name and index ex x[2] see postfix indexing for details*)
+                                                        let (env1, value1) = interpConditionalExpr env cond1 in         (*value1 has the evaluation of the left hand side*)
+                                                        (match value with
+                                                               String str -> let strArr = Array.to_list str in
+                                                                      (match strArr with
+                                                                             | []      -> raise (DebugVal "variable name should not be empty")
+                                                                             | [x] -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                                     (Env.add x value1 env, Void)
+                                                                             | [x;i] -> print_string ("Modifying variable "^x^" index = "^i^" ");
+                                                                                        let (env2, value2) = interpIdentifier env1 x in (*value2 has the array of the variable*)
+                                                                                        (match value2 with
+                                                                                                Integer narray -> Array.set narray (int_of_string i) (int_of_string (string_of_eidos_val value1));
+                                                                                                                  print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                  (Env.add x (Integer narray) env2, Void)
+                                                                                               | _             -> (env2, Void)
+                                                                                        )
                                                                       )
                                                                |_           -> (new_env, value)
                                                         )
@@ -323,6 +349,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                     | ([], [])          -> (env1, String [||])
                                                                                     | ([x], [])         -> (env1, String [|x|])
                                                                                     | ([], [x])         -> (env1, String [||])
+                                                                                    | ([x],[i])         -> (env1, String [|x;(string_of_int i)|]) (*added this option for indexed assignment x[2] = 1*)
                                                                                     | (x::xs as l, [n]) -> (env1, String [|(List.nth l n)|])
                                                                                     | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
                                                                                     | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
