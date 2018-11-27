@@ -15,13 +15,12 @@ exception EOFLex
 %token LPAREN RPAREN LCBRACE RCBRACE SEMI EQUALS TERNARY OR AND
 %token LESS GEQ PLUS MINUS TIMES DIVIDE MODULO COLON CARROT EXCLAIM
 %token LBRACE RBRACE COMMA DOT DOLLAR NEQ EQ LEQ GEQ IF ELSE FOR IN DO GREAT
-%token WHILE NEXT BREAK RETURN FUNCTION VOID NULL LOGICAL INTEGER FLOAT STRING OBJECT
-%token NUMERIC VOIDRV NULLRV LOGICALRV INTEGERRV FLOATRV STRINGRV OBJECTRV
+%token WHILE NEXT BREAK RETURN FUNCTION VOID NULL 
 %token EOF
 %token <int> LInt
 %token <float> LFloat
 %token <string> LVar
-%token <string> LStr
+%token <string> LStr LTypeF LTypeA
 
 %left LPlus
 %right LTimes
@@ -162,6 +161,7 @@ unary_expr:
 postfix_expr:
   primary_expr { PE($1,None) }
 | primary_expr postfix_opt { PE($1,Some $2) }
+| LTypeF postfix_opt { CAST($1, Some $2) }
 
 postfix_opt:
   function_call { FC($1,None) }
@@ -213,28 +213,23 @@ argument_expr_list:
 
 func_decl:
       FUNCTION return_type_spec identifier param_list compound_statement { Func($2,$3,$4,$5) }
+    | FUNCTION return_type_spec LTypeF param_list compound_statement { Func($2,$3,$4,$5) }
 
 return_type_spec:
       LPAREN type_spec RPAREN { RTySpec($2) }
 
 type_spec:
        types_all                          { T($1) }
-     | types_all DOLLAR                   { TDollar($1)}
+     | types_all DOLLAR                   { TDollar($1) }
 
 types_all:
      VOID                            { Void }
      | NULL                          { Null }
-     | LOGICAL                       { Logical }
-     | INTEGER                       { Integer }
-     | FLOAT                         { Float }
-     | STRING                        { String }
-     | OBJECT                        { Obj(None) }
-     | OBJECT obj_cls_spec           { Obj(Some $2)}
-     | NUMERIC                       { Numeric }
-     | PLUS                          { PlusTy }
-     | TIMES                         { TimesTy }
-     | type_abbrv                    { TyList($1) }
+     | LTypeF                        { TypeSpec($1) }
+     | LTypeA                        { TypeSpec($1) }   
 
+
+/*
 type_abbrv:
        type_abbrv1                   { [$1] }
      | type_abbrv type_abbrv1        { $2::$1 }
@@ -248,7 +243,7 @@ type_abbrv1:
    | STRINGRV                        { String }
    | OBJECTRV                        { Obj(None) }
    | OBJECTRV  obj_cls_spec          { Obj(Some $2) }
-
+*/
 
 obj_cls_spec:
     LESS    identifier    GREAT       { OSpec($2) }

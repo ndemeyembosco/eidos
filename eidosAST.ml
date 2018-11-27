@@ -63,7 +63,8 @@ and unary_expr  = Post of postfix_expr
                 | PlusExpr of unary_expr
                 | ExclaimExpr of unary_expr
 
-and postfix_expr  = PE of primary_expr * postfix_opt option
+and postfix_expr  = PE of primary_expr * postfix_opt option 
+                  | CAST of string * postfix_opt option
                   
 and postfix_opt   = FC of function_call * postfix_opt option
                   | AA of attribute_accessor * postfix_opt option
@@ -91,13 +92,9 @@ and return_type_spec = RTySpec of type_spec
 
 and type_spec = T of type_spec_h | TDollar of type_spec_h
 
-and type_spec_h = Void | Null | Logical | Float | Integer | String
-                 | Obj of object_class_spec option
-                 | Numeric
-                 | PlusTy
-                 | TimesTy
-                 | TyList of type_spec_h list 
-
+and type_spec_h = Void 
+                | Null 
+                | TypeSpec of string 
 
 and object_class_spec = OSpec of string
 

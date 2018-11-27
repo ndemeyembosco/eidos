@@ -22,6 +22,8 @@ let digit      = ['0'-'9']+
 let number     = digit decpart? exp?
 let stringChar = ('\\'['"''\\''n''r''t']|[^ '\n''\r''\\''\"'])+
 let stringLit  =  '\"'stringChar?'\"' | "\'"stringChar?"\'"
+let typespec_full = "logical"|"integer"|"float"|"string"|"object"|"numeric"
+let typespec_abbr = "lifso"|"lifs"|"ifso"|"lif"|"lfs"|"lso"|"ifs"|"iso"|"fso"|"li"|"lf"|"ls"|"lo"|"is"|"fi"|"io"|"fs"|"fo"|"so"|"l"|"i"|"f"|"s"|"o"
 
 rule lexer = parse
   ws+   { lexer lexbuf }
@@ -65,22 +67,11 @@ rule lexer = parse
 | "function" { FUNCTION }
 | "void"     { VOID }
 | "NULL"     { NULL }
-| "logical"  { LOGICAL }
-| "integer"  {INTEGER }
-| "float"    { FLOAT }
-| "string"   { STRING }
-| "object"   { OBJECT }
-| "numeric"  { NUMERIC }
 | digit  { LInt (int_of_string (Lexing.lexeme lexbuf)) }
 | number { LFloat (float_of_string (Lexing.lexeme lexbuf)) }
+| typespec_full { LTypeF (Lexing.lexeme lexbuf) }
+| typespec_abbr { LTypeA (Lexing.lexeme lexbuf) }
 | ident     { LVar (Lexing.lexeme lexbuf) }
-| stringLit { LStr (Lexing.lexeme lexbuf)}
-| 'v'        { VOIDRV }
-| 'n'        { NULLRV }
-| 'l'        { LOGICALRV }
-| 'i'        { INTEGERRV }
-| 'f'        { FLOATRV }
-| 's'        { STRINGRV }
-| 'o'        { OBJECTRV }
+| stringLit { LStr (Lexing.lexeme lexbuf) }
 | eof { EOF }
 | _  {lexer lexbuf}
