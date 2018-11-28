@@ -106,26 +106,7 @@ and interpJumpStmt env (jump : jump_stmt):env*eidosValue = match jump with (* th
 (* interpExpr : env -> expr -> env*eidosValue *)
 and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 
-(* interpAssignExpr : env -> assign_expr -> env*eidosValue *) (*
-and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) = 
-                                 match cond_exp_opt with
-                                        None -> let (new_env, value) =interpConditionalExpr env cond in
-                                                (new_env,value)
-                                       |Some cond1 -> let (new_env, value) = interpConditionalExpr Env.empty cond in    (*value has the name of the variable, or an array with name and index ex x[2] see postfix indexing for details*)
-                                                        let (env2, value2) = interpConditionalExpr env cond in          (*value2 has the evaluation of the variable including indexing x[2]*)
-                                                        let (env1, value1) = interpConditionalExpr env cond1 in         (*value1 has the evaluation of the left hand side*)
-                                                        (*print_string ("left hand side: "^(string_of_eidos_val value)^"\n" );
-                                                        print_string ("right hand side: "^(string_of_eidos_val value1)^"\n" );*)
-                                                        (match value with
-                                                               String str -> let strArr = Array.to_list str in
-                                                                      (match strArr with
-                                                                             | []      -> raise (DebugVal "variable name should not be empty")
-                                                                             | (x::xs) -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
-                                                                             (Env.add x value1 env, Void)
-                                                                      )
-                                                               |_           -> (new_env, value)
-                                                        ) *)
-
+(* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
 and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                  match cond_exp_opt with
                                         None -> let (new_env, value) =interpConditionalExpr env cond in
@@ -232,10 +213,9 @@ and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
 and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
                                                 | None         -> let (env, value) = interpMultExpr env mult_e in(*throw away Plus? probably an error!*)
-                                                                        (*print_string ((string_of_eidos_val value)^"\n" );*)
                                                                         (env,value)
                                                 | Some []       -> interpMultExpr env mult_e
-                                                | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
+                                                | Some (a::aas)   -> let interp_mult_with op1 op2 opstring m_expr =
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
                                                                                  let (env1, value1) = interpAddExpr new_env (Add (m_expr, Some aas)) in  (* type promotion stuff *)
                                                                                   (match (value, value1) with
@@ -278,15 +258,17 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | (l, l1)           -> if Array.length narray == Array.length marray
                                                                                                                                                            then (env1, Float (Array.map2 (fun t t1 -> op2 (float_of_int t1) t) narray marray))
                                                                                                                                                               else raise (DebugVal "vector length mismatch!"))
-                                                                                          |(String narray, Integer marray)  -> raise (DebugVal "string + integer")
+                                                                                          |(String narray, Integer marray)  -> (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                                                    | ([], [])          -> (env1, String [||])
+                                                                                                                                    | ([x], [])         -> (env1, String [|x|])
+                                                                                                                                    | ([], [x])         -> (env1, String [|string_of_int x|])
+                                                                                                                                    | ([x],[y])         -> (env1, String [|(x^opstring^(string_of_int y))|])
+                                                                                                                                    | (x::xs as l, y::ys as l2) -> raise (DebugVal "Unimplemented sum of s and i"))
                                                                                           |(v1, v2) -> print_string((string_of_eidos_val value)^ " " ^ (string_of_eidos_val value1)^ "\n");
                                                                                                      raise (TyExcept ("incompatible add!" ^ (string_of_eidos_val v1) ^ " " ^ (string_of_eidos_val v2)))) in
                                                                   (match a with
-                                                                    | Plus mul  -> interp_mult_with (+) (+.) mul
-                                                                    | Minus mul -> interp_mult_with (-) (-.) mul)
-
-(* interpAddSubMulExpr : env -> add_sub_mul_expr -> env*eidosValue *)
-(*and interpAddSubMulExpr = raise (DebugVal "I fail Addsubmul!")*)
+                                                                    | Plus mul  -> interp_mult_with (+) (+.) "+" mul
+                                                                    | Minus mul -> interp_mult_with (-) (-.) "-" mul)
 
 (* interpMultExpr : env -> mult_expr -> env*eidosValue *)
 and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) =
@@ -309,8 +291,6 @@ and interpMultExpr env (Mult (seq_e, seqe_opt) : mult_expr) =
                                                         | Div seq -> interp_seq_with (/) (/.) seq
                                                         | Mod seq -> interp_seq_with (mod) (mod_float) seq
                                                     )
-
-
 
 (* interpSeqExpr : env -> seq_expr -> env*eidosValue *)
 and interpSeqExpr env (Seq (exp, exp_opt) : seq_expr) = match exp_opt with
@@ -340,7 +320,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                     | ([], [])          -> (env1, Integer [||])
                                                                                     | ([x], [])         -> (env1, Integer [|x|])
                                                                                     | ([], [x])         -> (env1, Integer [||])
-                                                                                    | (x::xs as l, [n]) -> (try (env1, Integer [|(List.nth l n)|]) with | _ -> (env1, Integer [|-1|])) 
+                                                                                    | (x::xs as l, [n]) -> (try (env1, Integer [|(List.nth l n)|]) with | _ -> (env1, Integer [|-1|]))(*catching exception*) 
                                                                                     | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
                                                                                     | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
                                                                                                            then (env1, Integer (Array.map2 (op1) narray marray))
@@ -371,7 +351,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                     | ([], [])          -> (env1, String [||])
                                                                                     | ([x], [])         -> (env1, String [|x|])
                                                                                     | ([], [x])         -> (env1, String [||])
-                                                                                    | ([x],[i])         -> (env1, String [|x;i|])
+                                                                                    | ([x],[i])         -> (env1, String [|x;i|]) (*only this one used for now*)
                                                                            )
                                       | (_,_) -> raise (DebugVal "Unimplemented indexing types")
                                 )
