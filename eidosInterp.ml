@@ -14,7 +14,7 @@ exception DebugVal of string
 let rec interpBlock env (int_b : interp_block) = match int_b with
                       | Empty      -> (env, Void)
                       | StmtInterp(stmt, int_b1) ->
-                                                 let (new_env, _) = interpStatement env stmt in
+                                                 let (new_env, value) = interpStatement env stmt in
                                                     interpBlock new_env int_b1
                       (*| FuncInterp(func_decl, int_b1) ->
                                                   let (new_env, _) = interpFuncDecl env func_decl in
@@ -26,7 +26,7 @@ and interpStatement env (stmt : statement) = match stmt with
                                     | Cstmt cmpd_stmt -> interpCompoundStmt env cmpd_stmt
                                     | ExprStmt exp_stmt -> interpExprStmt env exp_stmt
                                     | For forstmt -> interpForStmt env forstmt
-                                    | Do do_while_stmt -> interpDoWhileStmt env do_while_stmt
+                                    | Do do_stmt -> interpDoWhileStmt env do_stmt
                                     | While whl -> interpWhileStmt env whl
                                     | Jump jstmt -> interpJumpStmt env jstmt
                                     | SlctStmt selec -> interpSelectStmt env selec
@@ -86,11 +86,13 @@ and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
 
 (* interpWhileStmt : env -> while_stmt -> env*eidosValue *) (* Implement loop unrolling! *)
 and interpWhileStmt env (WhileStmt (expr, stmt) : while_stmt) = let (new_env, value) = interpExpr env expr in
+print_string ("Done evaluating the expression\n");
                                                                 match value with
                                                                   Logical boolean -> if boolean = Array.of_list [false] then
                                                                                         (new_env, Void) 
                                                                                      else
                                                                                         let (env1, value1)  = interpStatement new_env stmt in
+                                                                                        print_string "Done to evaluate the inner statements\n";
                                                                                         interpWhileStmt env1 (WhileStmt (expr,stmt))
                                                                 | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!")
 
@@ -138,11 +140,19 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                              | [x] -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
                                                                                      (Env.add x value1 env, Void)
                                                                              | [x;i] -> print_string ("Modifying variable "^x^" index = "^i^" ");
-                                                                                        let (env2, value2) = interpIdentifier env1 x in (*value2 has the array of the variable*)
-                                                                                        (match value2 with
-                                                                                                Integer narray -> Array.set narray (int_of_string i) (int_of_string (string_of_eidos_val value1));
-                                                                                                                  print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
-                                                                                                                  (Env.add x (Integer narray) env2, Void)
+                                                                                        let p = Parse2.expr Lex2.lexer (Lexing.from_string (i)) in (*parsing the index string*)
+                                                                                        let (env2, value2) = interpExpr env p in (*value2 has the evaluation of the index*)
+                                                                                        let (env3, value3) = interpIdentifier env2 x in (*value3 has the array of the variable*)
+                                                                                        print_string ("index value = "^(string_of_eidos_val value2));
+                                                                                        (match value3 with
+                                                                                                Integer narray -> (match value2 with 
+                                                                                                                   Integer marray ->
+                                                                                                                           (match value1 with
+                                                                                                                                Integer v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
+                                                                                                                                print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                (Env.add x (Integer narray) env3, Void)
+                                                                                                                            )
+                                                                                                                  )
                                                                                                | _             -> (env2, Void)
                                                                                         )
                                                                       )
@@ -211,7 +221,7 @@ and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
                                                                               (match (value, value1) with 
                                                                                           (Integer narray, Integer marray) -> (env1, Logical (Array.map2 (op) narray marray))
                                                                                         (*| (Float na, Float ma)     -> (env1, Logical (Array.map2 (op) na ma))*)
-                                                                                        | _ -> raise (DebugVal "something is up")
+                                                                                        | _ -> raise (DebugVal "Relational expr not integer array")
                                                                               ) in                                                                      
                                                                               (match c with
                                                                                        | Less addexpr  -> interp_add_with (<) addexpr
@@ -228,17 +238,19 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                 | Some (a::aas)   -> let interp_mult_with op1 op2 m_expr =
                                                                                  let (new_env, value) = interpMultExpr env mult_e in
                                                                                  let (env1, value1) = interpAddExpr new_env (Add (m_expr, Some aas)) in  (* type promotion stuff *)
-
                                                                                   (match (value, value1) with
-                                                                                          |(Integer narray, Integer marray) -> (match (Array.to_list narray, Array.to_list marray) with
-                                                                                                                                    | ([], [])          -> (env1, Integer [||])
-                                                                                                                                    | ([x], [])         -> (env1, Integer [|x|])
-                                                                                                                                    | ([], [x])         -> (env1, Integer [|x|])
-                                                                                                                                    | (x::xs as l, [n]) -> (env1, Integer (Array.map (op1 n) narray))
-                                                                                                                                    | ([n], x::xs)      -> (env1, Integer (Array.map (op1 n) marray))
-                                                                                                                                    | (l, l1)           -> if Array.length narray == Array.length marray
-                                                                                                                                                           then (env1, Integer (Array.map2 (op1) narray marray))
-                                                                                                                                                              else raise (DebugVal "vector length mismatch!"))
+                                                                                          |(Integer narray, Integer marray) -> 
+                                                                                                    (match (Array.to_list narray, Array.to_list marray) with
+                                                                                                            ([], [])          -> (env1, Integer [||])
+                                                                                                          | ([x], [])         -> (env1, Integer [|x|])
+                                                                                                          | ([], [x])         -> (env1, Integer [|x|])
+                                                                                                          | ([x], [y])        -> (env1, Integer (Array.of_list [(op1 x y)]))
+                                                                                                          (*The following lines are not working the way they are intended*)
+                                                                                                          | (x::xs as l, [n]) -> (env1, Integer (Array.map ((op1) n) narray))
+                                                                                                          | ([n], x::xs)      -> (env1, Integer (Array.map ((op1) n) marray))
+                                                                                                          | (l, l1)           -> if Array.length narray == Array.length marray
+                                                                                                                                 then (env1, Integer (Array.map2 (op1) narray marray))
+                                                                                                                                 else raise (DebugVal "vector length mismatch!"))
                                                                                           |(Float narray, Float marray)     -> (match (Array.to_list narray, Array.to_list marray) with
                                                                                                                                     | ([], [])          -> (env1, Float [||])
                                                                                                                                     | ([x], [])         -> (env1, Float [|x|])
@@ -266,7 +278,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | (l, l1)           -> if Array.length narray == Array.length marray
                                                                                                                                                            then (env1, Float (Array.map2 (fun t t1 -> op2 (float_of_int t1) t) narray marray))
                                                                                                                                                               else raise (DebugVal "vector length mismatch!"))
-                                                                                          |(String narray, Integer marray)  -> raise Undefined
+                                                                                          |(String narray, Integer marray)  -> raise (DebugVal "string + integer")
                                                                                           |(v1, v2) -> print_string((string_of_eidos_val value)^ " " ^ (string_of_eidos_val value1)^ "\n");
                                                                                                      raise (TyExcept ("incompatible add!" ^ (string_of_eidos_val v1) ^ " " ^ (string_of_eidos_val v2)))) in
                                                                   (match a with
@@ -328,7 +340,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                     | ([], [])          -> (env1, Integer [||])
                                                                                     | ([x], [])         -> (env1, Integer [|x|])
                                                                                     | ([], [x])         -> (env1, Integer [||])
-                                                                                    | (x::xs as l, [n]) -> (env1, Integer [|(List.nth l n)|])
+                                                                                    | (x::xs as l, [n]) -> (try (env1, Integer [|(List.nth l n)|]) with | _ -> (env1, Integer [|-1|])) 
                                                                                     | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
                                                                                     | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
                                                                                                            then (env1, Integer (Array.map2 (op1) narray marray))
@@ -344,7 +356,6 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                                            then (env1, Integer (Array.map2 (op1) narray marray))
                                                                                                            else raise (DebugVal "vector length mismatch!"))*)
                                                                               )
-                                        
                                       | (String narray, Integer indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
                                                                                     | ([], [])          -> (env1, String [||])
                                                                                     | ([x], [])         -> (env1, String [|x|])
@@ -356,8 +367,13 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                                            then (env1, Integer (Array.map2 (op1) narray marray))
                                                                                                            else raise (DebugVal "vector length mismatch!"))*)
                                                                               )
-                                                (*raise (DebugVal "integer arrays"*)
-                                      | (_,_) -> raise (DebugVal "not integer arrays")
+                                      | (String narray, String indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
+                                                                                    | ([], [])          -> (env1, String [||])
+                                                                                    | ([x], [])         -> (env1, String [|x|])
+                                                                                    | ([], [x])         -> (env1, String [||])
+                                                                                    | ([x],[i])         -> (env1, String [|x;i|])
+                                                                           )
+                                      | (_,_) -> raise (DebugVal "Unimplemented indexing types")
                                 )
                                 (*raise (DebugVal "single index")*)
                        | _ -> raise (DebugVal "Other postfix not implemented")
