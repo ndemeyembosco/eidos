@@ -109,9 +109,11 @@ and interpExpr env (E cond_expr : expr) = interpConditionalExpr env cond_expr
 (* interpAssignExpr : env -> assign_expr -> env*eidosValue *)
 and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                  match cond_exp_opt with
+                                        (*This branch is for when it's not an assignment expression*)
                                         None -> let (new_env, value) =interpConditionalExpr env cond in
                                                 print_string ((string_of_eidos_val value)^"\n");
                                                 (new_env,value)
+                                       (*This branch is for actual assignment expressions*)
                                        |Some cond1 -> let (new_env, value) = interpConditionalExpr Env.empty cond in    (*value has the name of the variable, or an array with name and index ex x[2] see postfix indexing for details*)
                                                         let (env1, value1) = interpConditionalExpr env cond1 in         (*value1 has the evaluation of the left hand side*)
                                                         (match value with
@@ -128,12 +130,43 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                         (match value3 with
                                                                                                 Integer narray -> (match value2 with 
                                                                                                                    Integer marray ->
-                                                                                                                           (match value1 with
-                                                                                                                                Integer v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
-                                                                                                                                print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
-                                                                                                                                (Env.add x (Integer narray) env3, Void)
-                                                                                                                            )
+                                                                                                                       (match value1 with
+                                                                                                                           Integer v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
+                                                                                                                                         print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                         (Env.add x (Integer narray) env3, Void)
+                                                                                                                         | Float v ->  Array.set narray (Array.get marray 0) (int_of_float (Array.get v 0));
+                                                                                                                                         print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                         (Env.add x (Integer narray) env3, Void)
+                                                                                                                       )
+                                                                                                                   |_ -> raise (DebugVal "None integer index!")
                                                                                                                   )
+                                                                                               |Float narray -> (match value2 with
+                                                                                                                  Integer marray ->
+                                                                                                                    (match value1 with
+                                                                                                                        Integer v ->  Array.set narray (Array.get marray 0) (float_of_int (Array.get v 0));
+                                                                                                                                      print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                      (Env.add x (Float narray) env3, Void)
+                                                                                                                      | Float v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
+                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (Env.add x (Float narray) env3, Void)
+                                                                                                                    )
+                                                                                                                   |_ -> raise (DebugVal "None integer index!")
+                                                                                                                 )
+                                                                                              |String narray -> (match value2 with
+                                                                                                                  Integer marray ->
+                                                                                                                    (match value1 with
+                                                                                                                        Integer v ->  Array.set narray (Array.get marray 0) (string_of_int (Array.get v 0));
+                                                                                                                                      print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                      (Env.add x (String narray) env3, Void)
+                                                                                                                      | Float v ->  Array.set narray (Array.get marray 0) (string_of_float (Array.get v 0));
+                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (Env.add x (String narray) env3, Void)
+                                                                                                                      | String v -> Array.set narray (Array.get marray 0) (Array.get v 0);
+                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (Env.add x (String narray) env3, Void) 
+                                                                                                                    )
+                                                                                                                   |_ -> raise (DebugVal "None integer index!")
+                                                                                                                 )
                                                                                                | _             -> (env2, Void)
                                                                                         )
                                                                       )
@@ -235,6 +268,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | ([], [])          -> (env1, Float [||])
                                                                                                                                     | ([x], [])         -> (env1, Float [|x|])
                                                                                                                                     | ([], [x])         -> (env1, Float [|x|])
+                                                                                                                                    | ([x], [y])        -> (env1, Float (Array.of_list [(op2 x y)]))
                                                                                                                                     | (x::xs as l, [n]) -> (env1, Float (Array.map (op2 n) narray))
                                                                                                                                     | ([n], x::xs)      -> (env1, Float (Array.map (op2 n) marray))
                                                                                                                                     | (l, l1)           -> if Array.length narray == Array.length marray
@@ -244,6 +278,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | ([], [])          -> (env1, Float [||])
                                                                                                                                     | ([x], [])         -> (env1, Float [|float_of_int x|])
                                                                                                                                     | ([], [x])         -> (env1, Float [|x|])
+                                                                                                                                    | ([x], [y])        -> (env1, Float (Array.of_list [(op2 (float_of_int x) y)]))
                                                                                                                                     | (x::xs as l, [n]) -> (env1, Float (Array.map (fun t -> op2 (float_of_int t) n) narray))
                                                                                                                                     | ([n], x::xs)      -> (env1, Float (Array.map (fun t -> op2 (float_of_int n) t) marray))
                                                                                                                                     | (l, l1)           -> if Array.length narray == Array.length marray
@@ -253,6 +288,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | ([], [])          -> (env1, Float [||])
                                                                                                                                     | ([x], [])         -> (env1, Float [|x|])
                                                                                                                                     | ([], [x])         -> (env1, Float [|float_of_int x|])
+                                                                                                                                    | ([x], [y])        -> (env1, Float (Array.of_list [(op2 x (float_of_int y))]))
                                                                                                                                     | (x::xs as l, [n]) -> (env1, Float (Array.map (fun t -> op2 (float_of_int n) t) narray))
                                                                                                                                     | ([n], x::xs)      -> (env1, Float (Array.map (fun t -> op2 (float_of_int t) n) marray))
                                                                                                                                     | (l, l1)           -> if Array.length narray == Array.length marray
@@ -377,7 +413,7 @@ and interpIndexing env ((Idx cond_expr_list) : indexing) =
                    (match l with
                            []   -> (env,Void)
                          | [x]  -> interpConditionalExpr env x
-                         | (x::xs) -> raise (DebugVal "Several indexes")
+                         | (x::xs) -> raise (DebugVal "Several indexes unimplemented")
                    )
                                 
  (* interpPrimaryExpr : env -> primary_expr -> env*eidosValue *)
