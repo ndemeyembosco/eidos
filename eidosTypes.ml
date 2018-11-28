@@ -162,6 +162,12 @@ let make_seq_from_num_array n m = match (n, m) with
                      | (Float n_array, Float m_array) -> (match (n_array, m_array) with
                                          ([|n1|], [|m1|]) -> Float (Array.of_list (make_seq_of_float n1 m1))
                                          | _               -> raise (TyExcept "vectors must be singletons!"))
+                     | (Float n_array, Integer m_array) -> (match (n_array, m_array) with
+                                         ([|n1|], [|m1|]) -> Float (Array.of_list (make_seq_of_float n1 (float_of_int m1)))
+                                         | _               -> raise (TyExcept "vectors must be singletons!"))
+                     | (Integer n_array, Float m_array) -> (match (n_array, m_array) with
+                                         ([|n1|], [|m1|]) -> Float (Array.of_list (make_seq_of_float (float_of_int n1) m1))
+                                         | _               -> raise (TyExcept "vectors must be singletons!"))
                      | _                                -> raise (TyExcept "sequence function only works with numeric types!")
 
 let interp_for_value (env : env) (s : string) (varlist : eidosValue) (st : 'a) f
