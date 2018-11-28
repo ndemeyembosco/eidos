@@ -46,7 +46,7 @@ compound_statement:
 
 multiple_statements:
   statement { [$1] }
-| multiple_statements statement{ $2::$1 }
+| statement multiple_statements{ $1::$2 }
 
 expr_statement:
   SEMI { Estmt(None) }
