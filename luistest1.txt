@@ -23,3 +23,10 @@ a = 1;
 do
  a = a + 1;
 while(a < 10);
+array = 10:5;
+array[2] = 100;
+array;
+t = array[5];
+t;
+ind = 2;
+array[ind] = 99;
