@@ -1,23 +1,23 @@
-x = 1:20;
-x[4] = 10;
-x[8] = 2;
-x[0] = 100;
-x[12] = 3;
-x[2] = 11;
-x[5] = 25;
-x[19] = 15;
-x[14] = 1;
-x;
-for ( acc in 1:19 ){
+length = 40;
+x = 1:length;
+print("Initial x:");
+print(x);
+for ( iter in 1:length ) {
+  index = randInt(length);
+  value = randInt(100); 
+  x[index] = value;
+}
+print("Randomized x:");
+print(x);
+bound = length-1;
+for ( acc in 1:bound ){
   key = x[acc];
   j = acc - 1;
   while (j >= 0 & x[j] > key){
-     aux = x[j];
-     r = j+1;
-     x[r] = aux;
-     r = j; 
-     j = j - 1;
+    x[j+1] = x[j];
+    j = j-1;
   }
-  x[r] = key;
+  x[j+1] = key;
 }
-x;
+print("Ordered x");
+print(x);
