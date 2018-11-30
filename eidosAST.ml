@@ -70,7 +70,7 @@ and postfix_opt   = FC of function_call * postfix_opt option
                   | AA of attribute_accessor * postfix_opt option
                   | Ind of indexing * postfix_opt option
 
-and function_call = FuncCall of (argument_expr list)
+and function_call = FuncCall of (conditional_expr list) option
 
 and attribute_accessor = AttAcc of string
 

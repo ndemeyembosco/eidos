@@ -86,13 +86,11 @@ and interpDoWhileStmt env (dowhile : do_while_stmt) = match dowhile with
 
 (* interpWhileStmt : env -> while_stmt -> env*eidosValue *) (* Implement loop unrolling! *)
 and interpWhileStmt env (WhileStmt (expr, stmt) : while_stmt) = let (new_env, value) = interpExpr env expr in
-print_string ("Done evaluating the expression\n");
                                                                 match value with
                                                                   Logical boolean -> if boolean = Array.of_list [false] then
                                                                                         (new_env, Void) 
                                                                                      else
                                                                                         let (env1, value1)  = interpStatement new_env stmt in
-                                                                                        print_string "Done to evaluate the inner statements\n";
                                                                                         interpWhileStmt env1 (WhileStmt (expr,stmt))
                                                                 | _ -> raise (WhileExcept "expr inside while statement must evaluate to a boolean!")
 
@@ -111,7 +109,8 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                  match cond_exp_opt with
                                         (*This branch is for when it's not an assignment expression*)
                                         None -> let (new_env, value) =interpConditionalExpr env cond in
-                                                print_string ((string_of_eidos_val value)^"\n");
+                                                (*this prints to the string everytime something evaluates
+                                                print_string ((string_of_eidos_val value)^"\n");*)
                                                 (new_env,value)
                                        (*This branch is for actual assignment expressions*)
                                        |Some cond1 -> let (new_env, value) = interpConditionalExpr Env.empty cond in    (*value has the name of the variable, or an array with name and index ex x[2] see postfix indexing for details*)
@@ -120,22 +119,22 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                String str -> let strArr = Array.to_list str in
                                                                       (match strArr with
                                                                              | []      -> raise (DebugVal "variable name should not be empty")
-                                                                             | [x] -> print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );
+                                                                             | [x] -> (*print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );*)
                                                                                      (Env.add x value1 env, Void)
-                                                                             | [x;i] -> print_string ("Modifying variable "^x^" index = "^i^" ");
+                                                                             | [x;i] -> (*print_string ("Modifying variable "^x^" index = "^i^" ");*)
                                                                                         let p = Parse2.expr Lex2.lexer (Lexing.from_string (i)) in (*parsing the index string*)
                                                                                         let (env2, value2) = interpExpr env p in (*value2 has the evaluation of the index*)
                                                                                         let (env3, value3) = interpIdentifier env2 x in (*value3 has the array of the variable*)
-                                                                                        print_string ("index value = "^(string_of_eidos_val value2));
+                                                                                        (*print_string ("index value = "^(string_of_eidos_val value2));*)
                                                                                         (match value3 with
                                                                                                 Integer narray -> (match value2 with 
                                                                                                                    Integer marray ->
                                                                                                                        (match value1 with
                                                                                                                            Integer v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
-                                                                                                                                         print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                         (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                          (Env.add x (Integer narray) env3, Void)
                                                                                                                          | Float v ->  Array.set narray (Array.get marray 0) (int_of_float (Array.get v 0));
-                                                                                                                                         print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                         (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                          (Env.add x (Integer narray) env3, Void)
                                                                                                                        )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
@@ -144,10 +143,10 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                                                   Integer marray ->
                                                                                                                     (match value1 with
                                                                                                                         Integer v ->  Array.set narray (Array.get marray 0) (float_of_int (Array.get v 0));
-                                                                                                                                      print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                      (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                       (Env.add x (Float narray) env3, Void)
                                                                                                                       | Float v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
-                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                     (Env.add x (Float narray) env3, Void)
                                                                                                                     )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
@@ -156,13 +155,13 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                                                   Integer marray ->
                                                                                                                     (match value1 with
                                                                                                                         Integer v ->  Array.set narray (Array.get marray 0) (string_of_int (Array.get v 0));
-                                                                                                                                      print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                      (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                       (Env.add x (String narray) env3, Void)
                                                                                                                       | Float v ->  Array.set narray (Array.get marray 0) (string_of_float (Array.get v 0));
-                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                     (Env.add x (String narray) env3, Void)
                                                                                                                       | String v -> Array.set narray (Array.get marray 0) (Array.get v 0);
-                                                                                                                                    print_string ("setting it to "^(string_of_eidos_val value1)^"\n");
+                                                                                                                                    (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
                                                                                                                                     (Env.add x (String narray) env3, Void) 
                                                                                                                     )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
@@ -300,7 +299,7 @@ and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmu
                                                                                                                                     | ([], [x])         -> (env1, String [|string_of_int x|])
                                                                                                                                     | ([x],[y])         -> (env1, String [|(x^opstring^(string_of_int y))|])
                                                                                                                                     | (x::xs as l, y::ys as l2) -> raise (DebugVal "Unimplemented sum of s and i"))
-                                                                                          |(v1, v2) -> print_string((string_of_eidos_val value)^ " " ^ (string_of_eidos_val value1)^ "\n");
+                                                                                          |(v1, v2) -> (*print_string((string_of_eidos_val value)^ " " ^ (string_of_eidos_val value1)^ "\n");*)
                                                                                                      raise (TyExcept ("incompatible add!" ^ (string_of_eidos_val v1) ^ " " ^ (string_of_eidos_val v2)))) in
                                                                   (match a with
                                                                     | Plus mul  -> interp_mult_with (+) (+.) "+" mul
@@ -349,7 +348,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
             | Some postfix -> let (new_env, value) = 
                 interpPrimaryExpr env prim_e in
                 (match postfix with
-                        Ind (lst, None) ->  (* single indexing vectors and matrices*)
+                        Ind (lst, None) ->  (* single indexing vectors*)
                                 let (env1, value1) = interpIndexing new_env lst in
                                 (match (value,value1) with
                                         (Integer narray, Integer indexes) -> (match (Array.to_list narray, Array.to_list indexes) with
@@ -391,16 +390,40 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                            )
                                       | (_,_) -> raise (DebugVal "Unimplemented indexing types")
                                 )
-                                (*raise (DebugVal "single index")*)
+                       | FC (lst, None) -> 
+                                let (env1, value1) = interpFunctionCall new_env lst in
+                                  (match (value,value1) with
+                                        (String funcname, Integer values) ->    (match (Array.get funcname 0) with
+                                                                                   "print" -> print_string ((string_of_eidos_val value1)^"\n");
+                                                                                              (env1, Void)
+                                                                                  |"randInt" -> (*print_string ("called randInt function\n");*)
+                                                                                                Random.self_init();
+                                                                                                (env, Integer [|(Random.int (Array.get values 0))|])
+                                                                                                
+                                                                                )
+                                        |(String funcname, String values) ->    (match (Array.get funcname 0) with
+                                                                                   "print" -> print_string ((string_of_eidos_val value1)^"\n");
+                                                                                              (env1, Void)
+                                                                                  |"randInt" -> print_string ("randInt function only works with integer values\n");
+                                                                                                (env, Void)
+                                                                                                
+
+                                                                                )
+                                       |_ -> raise (DebugVal "not yet implemented")
+                                  )
                        | _ -> raise (DebugVal "Other postfix not implemented")
                 )
                  
 
-(* interpFuncExec : env -> function_execution -> env*eidosValue *)
-(*and interpFuncExec = raise (DebugVal "I fail interpFuncExec!")*)
-
-(* interpFuncDefn : env -> function_definition -> env*eidosValue *)
-(*and interpFuncDefn = raise (DebugVal "I fail interpFuncDef!")*)
+(* interpFunctionCall : env -> function_call -> agrument_expr_list*)
+and interpFunctionCall env ((FuncCall arg_expr_list) : function_call) =
+       match arg_expr_list with
+         None -> (env, Void)
+       | Some l ->  
+              (match l with
+                 [x] -> interpConditionalExpr env x
+               | (x::xs) -> raise (DebugVal "Multiple arguments unimplemented") 
+              )
 
 (* interpAttributeAccessor : env -> attribute_accessor -> env*eidosValue *)
 (*and interpAttributeAccessor = raise (DebugVal "I fail interpAA!")*)

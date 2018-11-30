@@ -176,7 +176,7 @@ let interp_for_value (env : env) (s : string) (varlist : eidosValue) (st : 'a) f
                                       (* print_string ((string_of_eidos_val varlist) ^ "\n"); *)
                                       (* Array.fold_right (fun v (new_env, v1) -> print_string ("added for loop variable " ^ s ^ " with value " ^ (string_of_eidos_val (Integer [|v|])) ^ "\n");
                                       f (Env.add s (Integer [|v|]) new_env) st) int_array (env, Void) *)
-                                      Array.fold_left (fun (new_env, v1) v -> print_string ("added for loop variable " ^ s ^ " with value " ^ (string_of_eidos_val (Integer [|v|])) ^ "\n");
+                                      Array.fold_left (fun (new_env, v1) v -> (*print_string ("added for loop variable " ^ s ^ " with value " ^ (string_of_eidos_val (Integer [|v|])) ^ "\n");*)
                                       f (Env.add s (Integer [|v|]) new_env) st) (env, Void) int_array
                      | Float float_array -> Array.fold_right (fun v (new_env, value) -> f (Env.add s (Float [|v|]) new_env) st) float_array (env, Void)
                      | Logical l_array   -> Array.fold_right (fun v (new_env, value) -> f (Env.add s (Logical [|v|]) new_env) st) l_array (env, Void)

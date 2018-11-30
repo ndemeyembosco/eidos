@@ -172,7 +172,16 @@ postfix_opt:
 | indexing postfix_opt { Ind($1, Some $2) }
 
 function_call:
-  LPAREN argument_expr_list RPAREN { FuncCall($2) }
+  LPAREN RPAREN { FuncCall(None) }
+| LPAREN argument_expr_list RPAREN { FuncCall(Some $2) }
+
+argument_expr:
+  conditional_expr { C($1) }
+| identifier EQUALS  conditional_expr { ArgSc($1,$3)}
+
+argument_expr_list:
+| conditional_expr { [$1] }
+| conditional_expr COMMA argument_expr_list{ $1::$3 }
 
 attribute_accessor:
   DOT identifier { AttAcc($2) }
@@ -200,14 +209,6 @@ constant:
 
 identifier:
   LVar { $1 }
-
-argument_expr:
-  conditional_expr { C($1) }
-| identifier EQUALS  conditional_expr { ArgSc($1,$3)}
-
-argument_expr_list:
-| argument_expr { [$1] }
-| argument_expr COMMA argument_expr_list{ $1::$3 }
 
 /* function declarations */
 
