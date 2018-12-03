@@ -12,14 +12,16 @@ exception DebugVal of string
 
 (* interpblock : env -> interp_block -> env*eidosValue*)  (* return last value of the block*)
 let rec interpBlock env (int_b : interp_block) = match int_b with
-                      | Empty      -> (env, Void)
-                      | StmtInterp(stmt, int_b1) ->
-                                                 let (new_env, value) = interpStatement env stmt in
-                                                    interpBlock new_env int_b1
+                          StmtInterp(stmt, int_b1) -> match int_b1 with
+                                                        None -> let (new_env, value) =  interpStatement env stmt in
+                                                                  print_string ((string_of_eidos_val value)^"\n"); (*print the last evaluation*)
+                                                                  (new_env, value)
+                                                      | Some int_b2 -> let (new_env, value) = interpStatement env stmt in
+                                                                                                interpBlock new_env int_b2
                       (*| FuncInterp(func_decl, int_b1) ->
                                                   let (new_env, _) = interpFuncDecl env func_decl in
                                                     interpBlock new_env int_b1
-                        *)
+                       *)
 
 (* interpStatement : env -> statement -> env*eidosValue *)
 and interpStatement env (stmt : statement) = match stmt with
@@ -122,8 +124,8 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                              | [x] -> (*print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );*)
                                                                                      (Env.add x value1 env, Void)
                                                                              | [x;i] -> (*print_string ("Modifying variable "^x^" index = "^i^" ");*)
-                                                                                        let p = Parse2.expr Lex2.lexer (Lexing.from_string (i)) in (*parsing the index string*)
-                                                                                        let (env2, value2) = interpExpr env p in (*value2 has the evaluation of the index*)
+                                                                                             let p = Parse.interpreter_block Lex.lexer (Lexing.from_string (i^";")) in (*parsing the index string*)
+                                                                                        let (env2, value2) = interpBlock env p in (*value2 has the evaluation of the index*)
                                                                                         let (env3, value3) = interpIdentifier env2 x in (*value3 has the array of the variable*)
                                                                                         (*print_string ("index value = "^(string_of_eidos_val value2));*)
                                                                                         (match value3 with
@@ -228,19 +230,25 @@ and interpEqtExpr env (Eqt (relexpr, eqneqe_l)) = match eqneqe_l with
 and interpRelExpr env (Rel (add_e, compl_opt) : rel_expr) = match compl_opt with
                                               | None         -> interpAddExpr env add_e    (* this option list stuff doesn't make sense! [] is really same as None! *)
                                               | Some []      -> interpAddExpr env add_e
-                                              | Some (c::cs) -> let interp_add_with op a_expr =
+                                              | Some (c::cs) -> let interp_add_with op op_string a_expr =
                                                                               let (new_env, value) = interpAddExpr env add_e in
                                                                               let (env1, value1)   = interpRelExpr new_env (Rel (a_expr, Some cs)) in
                                                                               (match (value, value1) with 
                                                                                           (Integer narray, Integer marray) -> (env1, Logical (Array.map2 (op) narray marray))
+                                                                                        | (Float narray, Float marray) -> (match op_string with
+                                                                                                                              "<" ->  (env1, Logical (Array.map2 (<) narray marray))
+                                                                                                                             |"<=" ->  (env1, Logical (Array.map2 (<=) narray marray))
+                                                                                                                             |">" ->  (env1, Logical (Array.map2 (>) narray marray))
+                                                                                                                             |">=" ->  (env1, Logical (Array.map2 (>=) narray marray))
+                                                                                                                          )
                                                                                         (*| (Float na, Float ma)     -> (env1, Logical (Array.map2 (op) na ma))*)
-                                                                                        | _ -> raise (DebugVal "Relational expr not integer array")
+                                                                                        | _ -> raise (DebugVal "Relational expr unsuported types")
                                                                               ) in                                                                      
                                                                               (match c with
-                                                                                       | Less addexpr  -> interp_add_with (<) addexpr
-                                                                                       | Leq addexpr   -> interp_add_with (<=) addexpr
-                                                                                       | Great addexpr -> interp_add_with (>) addexpr
-                                                                                       | Geq addexpr   -> interp_add_with (>=) addexpr
+                                                                                       | Less addexpr  -> interp_add_with (<) "<" addexpr
+                                                                                       | Leq addexpr   -> interp_add_with (<=) "<=" addexpr
+                                                                                       | Great addexpr -> interp_add_with (>) ">" addexpr
+                                                                                       | Geq addexpr   -> interp_add_with (>=) ">=" addexpr
                                                                               )
 (* interpAddExpr : env -> add_expr -> env*eidosValue *)
 and interpAddExpr env (Add (mult_e, addsubmulL_opt) : add_expr )= match addsubmulL_opt with
@@ -365,6 +373,7 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                     | ([], [])          -> (env1, Float [||])
                                                                                     | ([x], [])         -> (env1, Float [|x|])
                                                                                     | ([], [x])         -> (env1, Float [||])
+                                                                                    | (x::xs as l, [n]) -> (try (env1, Float [|(List.nth l n)|]) with | _ -> (env1, Float [|-1.0|]))(*catching exception*)
                                                                                     | (x::xs as l, [n]) -> (env1, Float [|(List.nth l n)|])
                                                                                     | ([n], x::xs)      -> raise (DebugVal "Unimplemented")
                                                                                     | (l, l1)           -> raise (DebugVal "Unimplemented")(*if Array.length narray == Array.length marray
@@ -399,12 +408,24 @@ and interpPostFixExpr env (PE (prim_e, postfix_opt) : postfix_expr ) =
                                                                                   |"randInt" -> (*print_string ("called randInt function\n");*)
                                                                                                 Random.self_init();
                                                                                                 (env, Integer [|(Random.int (Array.get values 0))|])
-                                                                                                
+                                                                                  |"randFloat" -> Random.self_init();
+                                                                                                  (env, Float [|(Random.float (float_of_int (Array.get values 0)))|])              
+                                                                                )
+                                        |(String funcname, Float values) ->    (match (Array.get funcname 0) with
+                                                                                   "print" -> print_string ((string_of_eidos_val value1)^"\n");
+                                                                                              (env1, Void)
+                                                                                  |"randInt" -> (*print_string ("called randInt function\n");*)
+                                                                                                Random.self_init();
+                                                                                                (env, Integer [|(Random.int (int_of_float (Array.get values 0)))|])
+                                                                                  |"randFloat" -> Random.self_init();
+                                                                                                  (env, Float [|(Random.float (Array.get values 0))|])
                                                                                 )
                                         |(String funcname, String values) ->    (match (Array.get funcname 0) with
                                                                                    "print" -> print_string ((string_of_eidos_val value1)^"\n");
                                                                                               (env1, Void)
-                                                                                  |"randInt" -> print_string ("randInt function only works with integer values\n");
+                                                                                  |"randInt" -> print_string ("randInt function only works with numeric values\n");
+                                                                                                (env, Void)
+                                                                                  |"randFloat" -> print_string ("randFloat function only works with numeric values\n");
                                                                                                 (env, Void)
                                                                                                 
 

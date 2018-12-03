@@ -28,9 +28,9 @@ exception EOFLex
 %%
 
 interpreter_block:
-  EOF { Empty }
-| statement interpreter_block { StmtInterp($1,$2) }
-| func_decl interpreter_block { FuncInterp($1,$2) }
+  statement EOF { StmtInterp($1,None) }
+| statement interpreter_block { StmtInterp($1, Some $2) }
+| func_decl interpreter_block { FuncInterp($1, Some $2) }
 
 statement:
   compound_statement { Cstmt($1) }

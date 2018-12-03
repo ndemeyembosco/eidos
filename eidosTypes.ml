@@ -99,10 +99,10 @@ let rec string_of_eidos_val (evalue : eidosValue) : string = match evalue with
                                             | (x::xs) -> string_of_int x ^" "^(string_of_eidos_val (Integer (Array.of_list xs))))
                         | Float l    -> (match Array.to_list l with
                                             | [] -> ""
-                                            | (x::xs) -> string_of_float x ^ (string_of_eidos_val (Float (Array.of_list xs))))
+                                            | (x::xs) -> string_of_float x ^" "^(string_of_eidos_val (Float (Array.of_list xs))))
                         | String l   -> (match Array.to_list l with
                                             | [] -> ""
-                                            | (x::xs) -> x ^ (string_of_eidos_val (String (Array.of_list xs))))
+                                            | (x::xs) -> x ^" "^(string_of_eidos_val (String (Array.of_list xs))))
                         | Num l      -> (match Array.to_list l with
                                             | [] -> ""
                                             | (x::xs) -> string_of_numeric x ^ (string_of_eidos_val (Num (Array.of_list xs))))
