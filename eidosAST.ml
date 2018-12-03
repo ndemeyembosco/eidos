@@ -1,6 +1,5 @@
-type interp_block = Empty
-                  | StmtInterp of statement * interp_block
-                  | FuncInterp of func_decl * interp_block
+type interp_block = StmtInterp of statement * (interp_block option)
+                  | FuncInterp of func_decl * (interp_block option)
 
 
 and statement  = Cstmt of compound_stmt
