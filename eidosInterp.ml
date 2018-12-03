@@ -124,8 +124,8 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                              | [x] -> (*print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );*)
                                                                                      (Env.add x value1 env, Void)
                                                                              | [x;i] -> (*print_string ("Modifying variable "^x^" index = "^i^" ");*)
-                                                                                             let p = Parse.interpreter_block Lex.lexer (Lexing.from_string (i^";")) in (*parsing the index string*)
-                                                                                        let (env2, value2) = interpBlock env p in (*value2 has the evaluation of the index*)
+                                                                                             let p = Parse2.expr Lex2.lexer (Lexing.from_string (i)) in (*parsing the index string*)
+                                                                                        let (env2, value2) = interpExpr env p in (*value2 has the evaluation of the index*)
                                                                                         let (env3, value3) = interpIdentifier env2 x in (*value3 has the array of the variable*)
                                                                                         (*print_string ("index value = "^(string_of_eidos_val value2));*)
                                                                                         (match value3 with
