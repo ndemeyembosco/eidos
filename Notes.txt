@@ -1,0 +1,14 @@
+- User defined functions
+  - We're not doing user defined functions.
+
+- Multiple posfix expressions
+  - We're not doing multiple posfix expressions such as
+	- x[2][3]
+	- f().attribute
+	- x[n].attribute
+
+- Multiple index indexint
+  - We're not doing multiple indexes for indexing such as
+	- x[2,4,5]
+	- x[c(T,F,T)]
+	
