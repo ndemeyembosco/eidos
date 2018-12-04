@@ -1,10 +1,11 @@
-length = 40;
+length = 1000;
+range = 1000;
 x = 1.0:length;
 print("Initial x:");
 print(x);
 for ( iter in 1:length ) {
   index = randInt(length);
-  value = randFloat(100); 
+  value = randFloat(range); 
   x[index] = value;
 }
 print("Randomized x:");
