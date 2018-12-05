@@ -1,0 +1,22 @@
+length = 100;
+range = 500;
+x = 1:length;
+for ( iter in 1:length ) {
+  index = randInt(length);
+  value = randInt(range); 
+  x[index] = value;
+}
+bound = length-1;
+print("Randomized x:");
+print(x);
+for ( acc in 1:bound ){
+  key = x[acc];
+  j = acc - 1;
+  while (j >= 0 & x[j] > key){
+    x[j+1] = x[j];
+    j = j-1;
+  }
+  x[j+1] = key;
+}
+print("Ordered x");
+print(x);
