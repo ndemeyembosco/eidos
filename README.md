@@ -4,4 +4,4 @@
 * `cd eidos`
 * `make all`
 * `make <file-path>` where `<file-path>` is a relative path to an eidos file.
-* `./interp <file-path>
+* `./interp <file-path>`
