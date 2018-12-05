@@ -122,7 +122,7 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                       (match strArr with
                                                                              | []      -> raise (DebugVal "variable name should not be empty")
                                                                              | [x] -> (*print_string ("Added variable "^x^" to the environment with value = "^(string_of_eidos_val value1)^"\n" );*)
-                                                                                     (Env.add x value1 env, Void)
+                                                                                     (Env.add x value1 env, value1)
                                                                              | [x;i] -> (*print_string ("Modifying variable "^x^" index = "^i^" ");*)
                                                                                              let p = Parse2.expr Lex2.lexer (Lexing.from_string (i)) in (*parsing the index string*)
                                                                                         let (env2, value2) = interpExpr env p in (*value2 has the evaluation of the index*)
@@ -134,10 +134,10 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                                                        (match value1 with
                                                                                                                            Integer v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
                                                                                                                                          (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                         (Env.add x (Integer narray) env3, Void)
+                                                                                                                                         (Env.add x (Integer narray) env3, (Integer narray))
                                                                                                                          | Float v ->  Array.set narray (Array.get marray 0) (int_of_float (Array.get v 0));
                                                                                                                                          (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                         (Env.add x (Integer narray) env3, Void)
+                                                                                                                                         (Env.add x (Integer narray) env3, (Integer narray))
                                                                                                                        )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
                                                                                                                   )
@@ -146,10 +146,10 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                                                     (match value1 with
                                                                                                                         Integer v ->  Array.set narray (Array.get marray 0) (float_of_int (Array.get v 0));
                                                                                                                                       (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                      (Env.add x (Float narray) env3, Void)
+                                                                                                                                      (Env.add x (Float narray) env3, (Float narray))
                                                                                                                       | Float v ->  Array.set narray (Array.get marray 0) (Array.get v 0);
                                                                                                                                     (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                    (Env.add x (Float narray) env3, Void)
+                                                                                                                                    (Env.add x (Float narray) env3, (Float narray))
                                                                                                                     )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
                                                                                                                  )
@@ -158,13 +158,13 @@ and interpAssignExpr env (Assign (cond, cond_exp_opt) : assign_expr) =
                                                                                                                     (match value1 with
                                                                                                                         Integer v ->  Array.set narray (Array.get marray 0) (string_of_int (Array.get v 0));
                                                                                                                                       (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                      (Env.add x (String narray) env3, Void)
+                                                                                                                                      (Env.add x (String narray) env3, (String narray))
                                                                                                                       | Float v ->  Array.set narray (Array.get marray 0) (string_of_float (Array.get v 0));
                                                                                                                                     (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                    (Env.add x (String narray) env3, Void)
+                                                                                                                                    (Env.add x (String narray) env3, (String narray))
                                                                                                                       | String v -> Array.set narray (Array.get marray 0) (Array.get v 0);
                                                                                                                                     (*print_string ("setting it to "^(string_of_eidos_val value1)^"\n");*)
-                                                                                                                                    (Env.add x (String narray) env3, Void) 
+                                                                                                                                    (Env.add x (String narray) env3, (String narray)) 
                                                                                                                     )
                                                                                                                    |_ -> raise (DebugVal "None integer index!")
                                                                                                                  )
